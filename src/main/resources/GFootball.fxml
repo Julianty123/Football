@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="215.0" prefWidth="512.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GFootball">
+<AnchorPane prefHeight="215.0" prefWidth="512.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GFootBall">
    <children>
       <Text fx:id="textName" layoutX="142.0" layoutY="67.0" stroke="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Name:" textAlignment="CENTER" wrappingWidth="192.0" />
       <Text fx:id="textIndex" layoutX="192.0" layoutY="36.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Index: -1" />

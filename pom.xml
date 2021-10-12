@@ -4,10 +4,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>G-EarthGang</groupId>
-    <artifactId>GFootball</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>gearthextensions</groupId>
+    <artifactId>GFootBall</artifactId>
+    <packaging>jar</packaging>
+    <version>0.1</version>
+
     <build>
+        <resources>
+            <!-- Embedded FXML and CSS resources -->
+            <resource>
+                <filtering>false</filtering>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.fxml</include>
+                    <include>**/*.css</include>
+                </includes>
+            </resource>
+        </resources>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -19,13 +33,16 @@
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>GFootball</mainClass>
+                            <mainClass>GFootBallLauncher</mainClass>
                             <useUniqueVersions>false</useUniqueVersions>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                     </archive>
+                    <finalName>${project.artifactId}</finalName>
                 </configuration>
             </plugin>
+
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.5</version>
@@ -41,22 +58,24 @@
                     <outputDirectory>${project.build.directory}/bin</outputDirectory>
                     <archive>
                         <manifest>
-                            <mainClass>GFootball</mainClass>
+                            <mainClass>GFootBallLauncher</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <finalName>GFootball</finalName>
+                    <finalName>${project.artifactId}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -65,8 +84,8 @@
     <dependencies>
         <dependency>
             <groupId>G-Earth</groupId>
-            <artifactId>G-Earth</artifactId>
-            <version>1.4.1</version>
+            <artifactId>G-Earth-Native-Extension</artifactId>
+            <version>1.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.1stleg</groupId>
@@ -74,11 +93,13 @@
             <version>2.1.0</version>
         </dependency>
     </dependencies>
+
+    <!-- Ignore this
     <repositories>
         <repository>
             <id>maven-harble</id>
             <name>Harble Nexus</name>
             <url>http://harble.net:8082/repository/maven-releases/</url>
         </repository>
-    </repositories>
+    </repositories>-->
 </project>
