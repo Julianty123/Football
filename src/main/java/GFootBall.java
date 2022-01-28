@@ -10,14 +10,13 @@ import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
-
 import java.util.logging.LogManager;
 
 
 @ExtensionInfo(
         Title = "GFootBall",
-        Description = "Known as Non DC bot",
-        Version = "1.0.3",
+        Description = "Known as Non DC Bot (bye Ahmed)",
+        Version = "1.0.2",
         Author = "Julianty"
 )
 

@@ -21,31 +21,15 @@
          <ToggleGroup fx:id="a" />
       </toggleGroup>
    </RadioButton>
-   <RadioButton fx:id="radioButtonTrap" layoutX="181.0" layoutY="128.0" mnemonicParsing="false" text="Trap [Key 2]">
-      <toggleGroup>
-         <ToggleGroup fx:id="a" />
-      </toggleGroup>
-   </RadioButton>
-   <RadioButton fx:id="radioButtonDribble" layoutX="38.0" layoutY="159.0" mnemonicParsing="false" text="Dribble [Key 3]">
-      <toggleGroup>
-         <ToggleGroup fx:id="a" />
-      </toggleGroup>
-   </RadioButton>
-   <RadioButton fx:id="radioButtonDoubleClick" layoutX="180.0" layoutY="159.0" mnemonicParsing="false" text="Double Click [Key 4]">
-      <toggleGroup>
-         <ToggleGroup fx:id="a" />
-      </toggleGroup>
-   </RadioButton>
+   <RadioButton fx:id="radioButtonTrap" layoutX="181.0" layoutY="128.0" mnemonicParsing="false" text="Trap [Key 2]" toggleGroup="$a" />
+   <RadioButton fx:id="radioButtonDribble" layoutX="38.0" layoutY="159.0" mnemonicParsing="false" text="Dribble [Key 3]" toggleGroup="$a" />
+   <RadioButton fx:id="radioButtonDoubleClick" layoutX="180.0" layoutY="159.0" mnemonicParsing="false" text="Double Click [Key 4]" toggleGroup="$a" />
    <CheckBox fx:id="checkGuideTile" layoutX="380.0" layoutY="93.0" mnemonicParsing="false" onAction="#handleGuideTile" text="Guide Tile" />
    <RadioButton fx:id="radioButtonWalk" layoutX="393.0" layoutY="159.0" mnemonicParsing="false" text="&quot;Walk&quot;">
       <toggleGroup>
          <ToggleGroup fx:id="b" />
       </toggleGroup>
    </RadioButton>
-   <RadioButton fx:id="radioButtonRun" layoutX="334.0" layoutY="128.0" mnemonicParsing="false" selected="true" text="&quot;Run&quot;(recommended)">
-      <toggleGroup>
-         <ToggleGroup fx:id="b" />
-      </toggleGroup>
-   </RadioButton>
+   <RadioButton fx:id="radioButtonRun" layoutX="334.0" layoutY="128.0" mnemonicParsing="false" selected="true" text="&quot;Run&quot;(recommended)" toggleGroup="$b" />
    <CheckBox fx:id="checkHideBubble" layoutX="372.0" layoutY="68.0" mnemonicParsing="false" selected="true" text="Hide Bubble" />
 </AnchorPane>
