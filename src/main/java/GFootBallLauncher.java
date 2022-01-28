@@ -7,7 +7,6 @@ import javafx.stage.Stage;
 
 public class GFootBallLauncher extends ExtensionFormCreator {
 
-
     @Override
     public ExtensionForm createForm(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("GFootBall.fxml"));
