@@ -3,7 +3,7 @@ import gearth.extensions.ExtensionInfo;
 import gearth.extensions.parsers.*;
 import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
-import javafx.event.ActionEvent;
+import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import org.jnativehook.GlobalScreen;
@@ -16,24 +16,44 @@ import java.util.logging.LogManager;
 @ExtensionInfo(
         Title = "GFootBall",
         Description = "Known as Non DC Bot (bye Ahmed)",
-        Version = "1.0.2",
+        Version = "1.0.6",
         Author = "Julianty"
 )
 
-
 // This library was used: https://github.com/kwhat/jnativehook
-public class GFootBall extends ExtensionForm implements NativeKeyListener{
+public class GFootBall extends ExtensionForm implements NativeKeyListener {
     public TextField textBallID;
     public RadioButton radioButtonShoot, radioButtonTrap, radioButtonDribble,
             radioButtonDoubleClick, radioButtonWalk, radioButtonRun;
-    public CheckBox checkBall, checkDisableDouble, checkClickThrough, checkGuideTile, checkHideBubble;
+    public CheckBox checkBall, checkDisableDouble, checkClickThrough, checkGuideTile, checkHideBubble, checkGuideTrap;
     public Text textName, textIndex, textYourCoords, textBallCoords;
 
     public String YourName;
     public int CurrentX, CurrentY, BallX, BallY;
+    public int ClickX, ClickY;
     public int YourIndex = -1;
-    public boolean flagBallTrap = false, flagBallDribble = false;
+    public boolean flagBallTrap = false, flagBallDribble = false, guideTrap = false;
 
+    /*
+    [StartTyping]
+Outgoing[2395] -> [0][0][0][2][9][91]
+{out:StartTyping}
+--------------------
+[UserTyping]
+Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][1]
+{in:UserTyping}{i:0}{i:1}
+	  userIndex  state: empieza a escribir
+--------------------
+[CancelTyping]
+Outgoing[3575] -> [0][0][0][2][13]÷
+{out:CancelTyping}
+--------------------
+[UserTyping]
+Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
+{in:UserTyping}{i:0}{i:0}
+	  userIndex  state: termina de escribir
+--------------------
+     */
 
     @Override
     protected void onShow() {
@@ -57,6 +77,14 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener{
     @Override
     protected void onHide() {
         YourIndex = -1;
+        sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "1" /* "1" = id */, false, 8636337, 0));
+        sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "2", false, 8636337, 0));
+
+        Platform.runLater(()->{
+            checkGuideTile.setSelected(false);
+            checkGuideTrap.setSelected(false);
+        });
+
         try {
             GlobalScreen.unregisterNativeHook();
             System.out.println("Hook disabled");
@@ -115,6 +143,18 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener{
                     int CurrentIndex = hEntityUpdate.getIndex();
                     if(CurrentIndex == YourIndex){
                         textIndex.setText("Your Index: " + CurrentIndex);
+
+                        int JokerX = hEntityUpdate.getTile().getX(); int JokerY = hEntityUpdate.getTile().getY(); // Necesario para el modo de trap
+                        if(checkGuideTrap.isSelected()){
+                            if(JokerX == BallX && JokerY == BallY){
+                                sendToClient(new HPacket("{in:Chat}{i:-1}{s:\"You are on the ball\"}{i:0}{i:30}{i:0}{i:0}"));
+                                guideTrap = true;
+                            }
+                            else{
+                                guideTrap = false; // Resuelve el problema de que se quede en el trap
+                            }
+                        }
+
                         if(radioButtonRun.isSelected()){
                             CurrentX = hEntityUpdate.getMovingTo().getX();  CurrentY = hEntityUpdate.getMovingTo().getY();
                         }
@@ -141,7 +181,7 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener{
                                 flagBallTrap = false;
                             }
                         }
-                        if (flagBallDribble){
+                        if(flagBallDribble){
                             if(BallX - 1 == CurrentX && BallY - 1 == CurrentY){
                                 kickBall(2, 2);
                                 flagBallDribble = false;
@@ -162,6 +202,14 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener{
                     }
                 }
                 catch (NullPointerException nullPointerException) {/*getMovingTo() throws a NullPointerException error*/}
+            }
+        });
+
+        intercept(HMessage.Direction.TOSERVER, "MoveAvatar", hMessage -> {
+            if(guideTrap){
+                ClickX = hMessage.getPacket().readInteger();    ClickY = hMessage.getPacket().readInteger();
+                Suggest(ClickX, ClickY);
+                hMessage.setBlocked(true);
             }
         });
 
@@ -216,7 +264,44 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener{
         flagBallTrap = false;
     }
 
-    public void handleClickThrough(ActionEvent actionEvent) {
+    public void Suggest(int ClickX, int ClickY){
+        if(ClickX == BallX - 1 && ClickY == BallY - 1){
+            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                    2, 8237, BallX + 6, BallY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        }
+        else if(ClickX == BallX + 1 && ClickY == BallY + 1){
+            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                    2, 8237, BallX - 6, BallY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        }
+        else if(ClickX == BallX - 1 && ClickY == BallY + 1){
+            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                    2, 8237, BallX + 6, BallY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        }
+        else if(ClickX == BallX + 1 && ClickY == BallY - 1){
+            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                    2, 8237, BallX - 6, BallY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        }
+
+        if(ClickX == BallX - 1 && ClickY == BallY){
+            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                    2, 8237, BallX + 6, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        }
+        else if(ClickX == BallX + 1 && ClickY == BallY){
+            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                    2, 8237, BallX - 6, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        }
+        else if(ClickX == BallX && ClickY == BallY + 1){
+            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                    2, 8237, BallX, BallY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        }
+        else if(ClickX == BallX && ClickY == BallY - 1){
+            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                    2, 8237, BallX, BallY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        }
+        sendToClient(new HPacket("{in:Chat}{i:-1}{s:\"Remember to press the ESCAPE key to kick\"}{i:0}{i:30}{i:0}{i:0}"));
+    }
+
+    public void handleClickThrough() {
         if(checkClickThrough.isSelected()){
             sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT, true));  // Enable Click Through
         }
@@ -231,14 +316,20 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener{
     // I dont want to type in the chat when i press a key but unfortunately this in java cannot be solved :(, i think
     @Override
     public void nativeKeyPressed(NativeKeyEvent nativeKeyEvent) {
+        NativeKeyEvent.getKeyText(nativeKeyEvent.getKeyCode());
+        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_ESCAPE){
+            guideTrap = false;
+            sendToServer(new HPacket("{out:MoveAvatar}{i:"+ClickX+"}{i:"+ClickY+"}"));
+        }
+
         flagBallTrap = false;   flagBallDribble = false;    // restart booleans
-        if(nativeKeyEvent.getKeyCode() == 2){ // Key 1
+        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_1){ // Key 1
             radioButtonShoot.setSelected(true);
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
                     1, 8237, BallX, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
             sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX, BallY));
         }
-        if(nativeKeyEvent.getKeyCode() == 3){ // Key 2
+        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_2){ // Key 2
             radioButtonTrap.setSelected(true);
             // En habbo futbol "Trap" significa pisar, el usuario caminara una casilla al frente del balon
 
@@ -316,7 +407,7 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener{
                 }
             }
         }
-        if(nativeKeyEvent.getKeyCode() == 4){   // Key 3
+        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_3){   // Key 3
             radioButtonDribble.setSelected(true);
             // En habbo futbol "Dribble" significa caminar, el usuario caminara dos casillas al frente del balon
 
@@ -394,7 +485,7 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener{
                 }
             }
         }
-        if(nativeKeyEvent.getKeyCode() == 5){ // Key 4
+        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_4){   // Key 4
             radioButtonDoubleClick.setSelected(true);
             sendToServer(new HPacket("UseFurniture", HMessage.Direction.TOSERVER,
                     Integer.parseInt(textBallID.getText()), 0));
@@ -406,13 +497,23 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener{
     @Override
     public void nativeKeyReleased(NativeKeyEvent nativeKeyEvent) { }
 
-    public void handleGuideTile(ActionEvent actionEvent) {
+    public void handleGuideTile() {
         if(checkGuideTile.isSelected()){
             sendToClient(new HPacket("ObjectAdd", HMessage.Direction.TOCLIENT, 1, 5399, 0
                     , 0, 0, "0.0" /*"3.5"*/, "0.2", 0, 0, "1", -1, 1, 2, YourName));
         }
         else {
             sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "1", false, 8636337, 0));
+        }
+    }
+
+    public void handleGuideTrap(){
+        if(checkGuideTrap.isSelected()){
+            sendToClient(new HPacket("ObjectAdd", HMessage.Direction.TOCLIENT, 2, 5399, 0
+                    , 0, 0, "0.0", "0.2", 0, 0, "1", -1, 1, 2, YourName));
+        }
+        else {
+            sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "2", false, 8636337, 0));
         }
     }
 }
