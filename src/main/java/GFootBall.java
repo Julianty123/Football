@@ -323,13 +323,13 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         }
 
         flagBallTrap = false;   flagBallDribble = false;    // restart booleans
-        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_1){ // Key 1
+        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_F1){ // Key F1
             radioButtonShoot.setSelected(true);
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
                     1, 8237, BallX, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
             sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX, BallY));
         }
-        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_2){ // Key 2
+        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_F2){ // Key F2
             radioButtonTrap.setSelected(true);
             // En habbo futbol "Trap" significa pisar, el usuario caminara una casilla al frente del balon
 
@@ -407,7 +407,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                 }
             }
         }
-        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_3){   // Key 3
+        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_F3){   // Key F3
             radioButtonDribble.setSelected(true);
             // En habbo futbol "Dribble" significa caminar, el usuario caminara dos casillas al frente del balon
 
@@ -485,7 +485,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                 }
             }
         }
-        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_4){   // Key 4
+        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_F4){   // Key F4
             radioButtonDoubleClick.setSelected(true);
             sendToServer(new HPacket("UseFurniture", HMessage.Direction.TOSERVER,
                     Integer.parseInt(textBallID.getText()), 0));
