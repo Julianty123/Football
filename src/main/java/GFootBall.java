@@ -26,13 +26,15 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener {
     public RadioButton radioButtonShoot, radioButtonTrap, radioButtonDribble,
             radioButtonDoubleClick, radioButtonWalk, radioButtonRun;
     public CheckBox checkBall, checkDisableDouble, checkClickThrough, checkGuideTile, checkHideBubble, checkGuideTrap;
-    public Text textName, textIndex, textYourCoords, textBallCoords;
+    public Text textYourName, textIndex, textYourCoords, textBallCoords;
 
     public String YourName;
     public int CurrentX, CurrentY, BallX, BallY;
     public int ClickX, ClickY;
     public int YourIndex = -1;
     public boolean flagBallTrap = false, flagBallDribble = false, guideTrap = false;
+    public TextField txtShoot, txtTrap, txtDribble, txtDoubleClick;
+    public Label labelShoot;
 
     /*
     [StartTyping]
@@ -99,7 +101,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         intercept(HMessage.Direction.TOCLIENT, "UserObject", hMessage -> {
             // Gets ID and Name in order.
             int YourID = hMessage.getPacket().readInteger();    YourName = hMessage.getPacket().readString();
-            textName.setText("Your Name: " + YourName);
+            textYourName.setText("Your Name: " + YourName);    // No es necesario usar Platform.runLater()
         });
 
         // Response of packet AvatarExpression (gets userIndex)
@@ -116,6 +118,10 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             if(primaryStage.isShowing() && checkHideBubble.isSelected()){   // If the window is open and the control is checked, it will do that
                 hMessage.setBlocked(true);
             }
+        });
+
+        intercept(HMessage.Direction.TOCLIENT, "RoomReady", hMessage -> {
+            System.out.println("RoomReady");
         });
 
         // Intercepts this packet when you enter or any user arrive to the room
@@ -265,6 +271,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     }
 
     public void Suggest(int ClickX, int ClickY){
+        // Seria bueno en el futuro agregar una animacion del recorrido
         if(ClickX == BallX - 1 && ClickY == BallY - 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
                     2, 8237, BallX + 6, BallY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
@@ -287,6 +294,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                     2, 8237, BallX + 6, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
         else if(ClickX == BallX + 1 && ClickY == BallY){
+            System.out.println("6");
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
                     2, 8237, BallX - 6, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
@@ -313,185 +321,226 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     @Override
     public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) { }
 
-    // I dont want to type in the chat when i press a key but unfortunately this in java cannot be solved :(, i think
+    // I don't want to type in the chat when i press a key but unfortunately this in java cannot be solved :(, i think
     @Override
     public void nativeKeyPressed(NativeKeyEvent nativeKeyEvent) {
-        NativeKeyEvent.getKeyText(nativeKeyEvent.getKeyCode());
         if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_ESCAPE){
-            guideTrap = false;
-            sendToServer(new HPacket("{out:MoveAvatar}{i:"+ClickX+"}{i:"+ClickY+"}"));
+            guideTrap = false;  sendToServer(new HPacket("{out:MoveAvatar}{i:"+ClickX+"}{i:"+ClickY+"}"));
         }
-
         flagBallTrap = false;   flagBallDribble = false;    // restart booleans
-        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_F1){ // Key F1
-            radioButtonShoot.setSelected(true);
-            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    1, 8237, BallX, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-            sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX, BallY));
-        }
-        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_F2){ // Key F2
-            radioButtonTrap.setSelected(true);
-            // En habbo futbol "Trap" significa pisar, el usuario caminara una casilla al frente del balon
 
-            // Example -> Ball coords (8, 5) ; User up (8, 4)
-            if (BallX == CurrentX && BallY > CurrentY)
-            {
-                kickBall(0, 1);
-            }
-            // Example -> Ball coords (8, 5) ; User down (8, 6)
-            if (BallX == CurrentX && BallY < CurrentY)
-            {
-                kickBall(0, -1);
-            }
-            // Example -> Ball coords (8, 5) ; User left (7, 5)
-            if (BallX > CurrentX && BallY == CurrentY)
-            {
-                kickBall(1, 0);
-            }
-            // Example -> Ball coords (8, 5) ; User right (9, 5)
-            if (BallX < CurrentX && BallY == CurrentY)
-            {
-                kickBall(-1, 0);
-            }
-
-            // Example -> Ball coords (8, 5) ; User corner top left (7, 4)
-            if (BallX > CurrentX && BallY > CurrentY)
-            {
-                if(BallX - 1 == CurrentX && BallY - 1 == CurrentY){
-                    kickBall(1, 1);
+        String keyText = NativeKeyEvent.getKeyText(nativeKeyEvent.getKeyCode());
+        TextInputControl[] txtFieldsHotKeys = new TextInputControl[]{txtShoot, txtTrap, txtDribble, txtDoubleClick};
+        /* When the key is released, somehow the loop stops, however it reduces performance and fails sometimes, sorry :/
+        new Thread(() -> { }).start();*/
+        for(TextInputControl element: txtFieldsHotKeys){
+            if(element.isFocused()){    // si alguno de los controles tiene el control hace algo...
+                Platform.runLater(()-> element.setText(keyText));
+                if(element.equals(txtShoot)){
+                    Platform.runLater(()-> radioButtonShoot.setText(String.format("Shoot [Key %s]", keyText)));
                 }
-                else {
-                    sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                            1, 8237, BallX - 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                    sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY - 1));
-                    flagBallTrap =  true;
+                else if(element.equals(txtTrap)){
+                    Platform.runLater(()-> radioButtonTrap.setText(String.format("Trap [Key %s]", keyText)));
                 }
+                else if(element.equals(txtDribble)){
+                    Platform.runLater(()-> radioButtonDribble.setText(String.format("Dribble [Key %s]", keyText)));
+                }
+                else if(element.equals(txtDoubleClick)){
+                    Platform.runLater(()-> radioButtonDoubleClick.setText(String.format("DoubleClick [Key %s]", keyText)));
+                }
+                // lastInputControl = element;
+                Platform.runLater(labelShoot::requestFocus);    // Al parecer darle el foco a un label sin modificar es la mejor opcion
             }
-            // Example -> Ball coords (8, 5) ; User corner top right (9, 4)
-            if (BallX < CurrentX && BallY > CurrentY)
-            {
-                if(BallX + 1 == CurrentX && BallY - 1 == CurrentY){
-                    kickBall(-1, 1);
-                }
-                else {
-                    sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                            1, 8237, BallX + 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                    sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY - 1));
-                    flagBallTrap =  true;
-                }
-            }
-            // Example -> Ball coords (8, 5) ; User corner lower left (7, 6)
-            if (BallX > CurrentX && BallY < CurrentY)
-            {
-                if(BallX - 1 == CurrentX && BallY + 1 == CurrentY){
-                    kickBall(1, -1);
-                }
-                else {
-                    sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                            1, 8237, BallX - 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                    sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY + 1));
-                    flagBallTrap =  true;
-                }
-            }
-            // Example -> Ball coords (8, 5) ; User corner lower right (9, 6)
-            if (BallX < CurrentX && BallY < CurrentY)
-            {
-                if(BallX + 1 == CurrentX && BallY + 1 == CurrentY){
-                    kickBall(-1 , -1);
-                }
-                else {
-                    sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                            1, 8237, BallX + 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                    sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY + 1));
-                    flagBallTrap =  true;
+            else if(!element.isFocused()){  // Si ninguno de los elementos tiene el foco...
+                if(element.getText().equals(keyText)){
+                    if(keyText.equals(txtShoot.getText())){
+                        keyShoot();
+                    }
+                    else if(keyText.equals(txtTrap.getText())){
+                        keyTrap();
+                    }
+                    else if(keyText.equals(txtDribble.getText())){
+                        keyDribble();
+                    }
+                    else if(keyText.equals(txtDoubleClick.getText())){
+                        keyDoubleClick();
+                    }
                 }
             }
         }
-        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_F3){   // Key F3
-            radioButtonDribble.setSelected(true);
-            // En habbo futbol "Dribble" significa caminar, el usuario caminara dos casillas al frente del balon
+    }
 
-            // Example -> Ball coords (8, 5) ; User up (8, 4)
-            if (BallX == CurrentX && BallY > CurrentY)
-            {
-                kickBall(0 ,2);
-            }
-            // Example -> Ball coords (8, 5) ; User down (8, 6)
-            if (BallX == CurrentX && BallY < CurrentY)
-            {
-                kickBall(0, -2);
-            }
-            // Example -> Ball coords (8, 5) ; User left (7, 5)
-            if (BallX > CurrentX && BallY == CurrentY)
-            {
-                kickBall(2, 0);
-            }
-            // Example -> Ball coords (8, 5) ; User right (9, 5)
-            if (BallX < CurrentX && BallY == CurrentY)
-            {
-                kickBall(-2 , 0);
-            }
+    private void keyDoubleClick() {
+        radioButtonDoubleClick.setSelected(true);
+        sendToServer(new HPacket("UseFurniture", HMessage.Direction.TOSERVER,
+                Integer.parseInt(textBallID.getText()), 0));
+        sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT, 1, 8237, BallX, BallY,
+                0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+    }
 
-            // Example -> Ball coords (8, 5) ; User corner top left (7, 4)
-            if (BallX > CurrentX && BallY > CurrentY)
-            {
-                if(BallX - 1 == CurrentX && BallY - 1 == CurrentY){ // BallX - 2 == CurrentX && BallY - 2 == CurrentY
-                    kickBall(2, 2);
-                }
-                else {
-                    sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                            1, 8237, BallX - 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                    sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY - 1));
-                    flagBallDribble =  true;
-                }
+    private void keyDribble() {
+        radioButtonDribble.setSelected(true);
+        // En habbo futbol "Dribble" significa caminar, el usuario caminara dos casillas al frente del balon
+
+        // Example -> Ball coords (8, 5) ; User up (8, 4)
+        if (BallX == CurrentX && BallY > CurrentY)
+        {
+            kickBall(0 ,2);
+        }
+        // Example -> Ball coords (8, 5) ; User down (8, 6)
+        if (BallX == CurrentX && BallY < CurrentY)
+        {
+            kickBall(0, -2);
+        }
+        // Example -> Ball coords (8, 5) ; User left (7, 5)
+        if (BallX > CurrentX && BallY == CurrentY)
+        {
+            kickBall(2, 0);
+        }
+        // Example -> Ball coords (8, 5) ; User right (9, 5)
+        if (BallX < CurrentX && BallY == CurrentY)
+        {
+            kickBall(-2 , 0);
+        }
+
+        // Example -> Ball coords (8, 5) ; User corner top left (7, 4)
+        if (BallX > CurrentX && BallY > CurrentY)
+        {
+            if(BallX - 1 == CurrentX && BallY - 1 == CurrentY){ // BallX - 2 == CurrentX && BallY - 2 == CurrentY
+                kickBall(2, 2);
             }
-            // Example -> Ball coords (8, 5) ; User corner top right (9, 4)
-            if (BallX < CurrentX && BallY > CurrentY)
-            {
-                if(BallX + 1 == CurrentX && BallY - 1 == CurrentY){
-                    kickBall(-2 , 2);
-                }
-                else {
-                    sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                            1, 8237, BallX + 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                    sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY - 1));
-                    flagBallDribble =  true;
-                }
-            }
-            // Example -> Ball coords (8, 5) ; User corner lower left (7, 6)
-            if (BallX > CurrentX && BallY < CurrentY)
-            {
-                if(BallX - 1 == CurrentX && BallY + 1 == CurrentY){
-                    kickBall(2, -2);
-                }
-                else {
-                    sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                            1, 8237, BallX - 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                    sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY + 1));
-                    flagBallDribble =  true;
-                }
-            }
-            // Example -> Ball coords (8, 5) ; User corner lower right (9, 6)
-            if (BallX < CurrentX && BallY < CurrentY)
-            {
-                if(BallX + 1 == CurrentX && BallY + 1 == CurrentY){
-                    kickBall(-2 , -2);
-                }
-                else {
-                    sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                            1, 8237, BallX + 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                    sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY + 1));
-                    flagBallDribble =  true;
-                }
+            else {
+                sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                        1, 8237, BallX - 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY - 1));
+                flagBallDribble =  true;
             }
         }
-        if(nativeKeyEvent.getKeyCode() == NativeKeyEvent.VC_F4){   // Key F4
-            radioButtonDoubleClick.setSelected(true);
-            sendToServer(new HPacket("UseFurniture", HMessage.Direction.TOSERVER,
-                    Integer.parseInt(textBallID.getText()), 0));
-            sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT, 1, 8237, BallX, BallY,
-                    0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        // Example -> Ball coords (8, 5) ; User corner top right (9, 4)
+        if (BallX < CurrentX && BallY > CurrentY)
+        {
+            if(BallX + 1 == CurrentX && BallY - 1 == CurrentY){
+                kickBall(-2 , 2);
+            }
+            else {
+                sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                        1, 8237, BallX + 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY - 1));
+                flagBallDribble =  true;
+            }
         }
+        // Example -> Ball coords (8, 5) ; User corner lower left (7, 6)
+        if (BallX > CurrentX && BallY < CurrentY)
+        {
+            if(BallX - 1 == CurrentX && BallY + 1 == CurrentY){
+                kickBall(2, -2);
+            }
+            else {
+                sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                        1, 8237, BallX - 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY + 1));
+                flagBallDribble =  true;
+            }
+        }
+        // Example -> Ball coords (8, 5) ; User corner lower right (9, 6)
+        if (BallX < CurrentX && BallY < CurrentY)
+        {
+            if(BallX + 1 == CurrentX && BallY + 1 == CurrentY){
+                kickBall(-2 , -2);
+            }
+            else {
+                sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                        1, 8237, BallX + 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY + 1));
+                flagBallDribble =  true;
+            }
+        }
+    }
+
+    private void keyTrap() {
+        radioButtonTrap.setSelected(true);
+        // En habbo futbol "Trap" significa pisar, el usuario caminara una casilla al frente del balon
+
+        // Example -> Ball coords (8, 5) ; User up (8, 4)
+        if (BallX == CurrentX && BallY > CurrentY)
+        {
+            kickBall(0, 1);
+        }
+        // Example -> Ball coords (8, 5) ; User down (8, 6)
+        if (BallX == CurrentX && BallY < CurrentY)
+        {
+            kickBall(0, -1);
+        }
+        // Example -> Ball coords (8, 5) ; User left (7, 5)
+        if (BallX > CurrentX && BallY == CurrentY)
+        {
+            kickBall(1, 0);
+        }
+        // Example -> Ball coords (8, 5) ; User right (9, 5)
+        if (BallX < CurrentX && BallY == CurrentY)
+        {
+            kickBall(-1, 0);
+        }
+
+        // Example -> Ball coords (8, 5) ; User corner top left (7, 4)
+        if (BallX > CurrentX && BallY > CurrentY)
+        {
+            if(BallX - 1 == CurrentX && BallY - 1 == CurrentY){
+                kickBall(1, 1);
+            }
+            else {
+                sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                        1, 8237, BallX - 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY - 1));
+                flagBallTrap =  true;
+            }
+        }
+        // Example -> Ball coords (8, 5) ; User corner top right (9, 4)
+        if (BallX < CurrentX && BallY > CurrentY)
+        {
+            if(BallX + 1 == CurrentX && BallY - 1 == CurrentY){
+                kickBall(-1, 1);
+            }
+            else {
+                sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                        1, 8237, BallX + 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY - 1));
+                flagBallTrap =  true;
+            }
+        }
+        // Example -> Ball coords (8, 5) ; User corner lower left (7, 6)
+        if (BallX > CurrentX && BallY < CurrentY)
+        {
+            if(BallX - 1 == CurrentX && BallY + 1 == CurrentY){
+                kickBall(1, -1);
+            }
+            else {
+                sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                        1, 8237, BallX - 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY + 1));
+                flagBallTrap =  true;
+            }
+        }
+        // Example -> Ball coords (8, 5) ; User corner lower right (9, 6)
+        if (BallX < CurrentX && BallY < CurrentY)
+        {
+            if(BallX + 1 == CurrentX && BallY + 1 == CurrentY){
+                kickBall(-1 , -1);
+            }
+            else {
+                sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                        1, 8237, BallX + 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY + 1));
+                flagBallTrap =  true;
+            }
+        }
+    }
+
+    private void keyShoot() {
+        radioButtonShoot.setSelected(true);
+        sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                1, 8237, BallX, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX, BallY));
     }
 
     @Override
