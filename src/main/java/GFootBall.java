@@ -4,6 +4,7 @@ import gearth.extensions.parsers.*;
 import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import org.jnativehook.GlobalScreen;
@@ -16,24 +17,25 @@ import java.util.logging.LogManager;
 @ExtensionInfo(
         Title = "GFootBall",
         Description = "Known as Non DC Bot (bye Ahmed)",
-        Version = "1.0.8",
+        Version = "1.0.7",
         Author = "Julianty"
 )
 
 // This library was used: https://github.com/kwhat/jnativehook
 public class GFootBall extends ExtensionForm implements NativeKeyListener {
-    public TextField textBallID;
+    public TextField txtBallId;
     public RadioButton radioButtonShoot, radioButtonTrap, radioButtonDribble,
             radioButtonDoubleClick, radioButtonWalk, radioButtonRun;
-    public CheckBox checkBall, checkDisableDouble, checkClickThrough, checkGuideTile, checkHideBubble, checkGuideTrap;
+    public CheckBox checkBall, checkDisableDouble, checkClickThrough, checkGuideTile, checkHideBubble,
+            checkGuideTrap, checkDiagoKiller;
     public Text textYourName, textIndex, textYourCoords, textBallCoords;
 
     public String YourName;
-    public int CurrentX, CurrentY, BallX, BallY;
+    public int CurrentX, CurrentY, ballX, ballY;
     public int ClickX, ClickY;
     public int YourIndex = -1;
     public boolean flagBallTrap = false, flagBallDribble = false, guideTrap = false;
-    public TextField txtShoot, txtTrap, txtDribble, txtDoubleClick;
+    public TextField txtShoot, txtTrap, txtDribble, txtDoubleClick, txtUniqueId;
     public Label labelShoot; // Lo instancie para darle el foco
 
     /*
@@ -59,8 +61,11 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
     @Override
     protected void onShow() {
-        sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER)); // When its sent, gets UserObject packet
-        sendToServer(new HPacket("AvatarExpression", HMessage.Direction.TOSERVER, 0));  // With this it's not necessary to restart the room
+        // sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER)); // When its sent, gets UserObject packet
+        // sendToServer(new HPacket("AvatarExpression", HMessage.Direction.TOSERVER, 0));  // With this it's not necessary to restart the room
+        sendToServer(new HPacket("{out:InfoRetrieve}"));
+        sendToServer(new HPacket("{out:AvatarExpression}{i:0}"));
+
 
         LogManager.getLogManager().reset(); // https://stackoverflow.com/questions/30560212/how-to-remove-the-logging-data-from-jnativehook-library
         try {
@@ -80,7 +85,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     protected void onHide() {
         YourIndex = -1;
         sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "1" /* "1" = id */, false, 8636337, 0));
-        sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "2", false, 8636337, 0));
+        sendToClient(new HPacket("{in:ObjectRemove}{s:\"2\"}{b:false}{i:8636337}{i:0}"));
 
         Platform.runLater(()->{
             checkGuideTile.setSelected(false);
@@ -152,7 +157,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
                         int JokerX = hEntityUpdate.getTile().getX(); int JokerY = hEntityUpdate.getTile().getY(); // Necesario para el modo de trap
                         if(checkGuideTrap.isSelected()){
-                            if(JokerX == BallX && JokerY == BallY){
+                            if(JokerX == ballX && JokerY == ballY){
                                 sendToClient(new HPacket("{in:Chat}{i:-1}{s:\"You are on the ball\"}{i:0}{i:30}{i:0}{i:0}"));
                                 guideTrap = true;
                             }
@@ -170,37 +175,37 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                         textYourCoords.setText("Your Coords: (" + CurrentX + ", " + CurrentY + ")");
 
                         if(flagBallTrap){
-                            if(BallX - 1 == CurrentX && BallY - 1 == CurrentY){
+                            if(ballX - 1 == CurrentX && ballY - 1 == CurrentY){
                                 kickBall(1, 1);
                                 flagBallTrap = false;
                             }
-                            if(BallX + 1 == CurrentX && BallY - 1 == CurrentY){
+                            if(ballX + 1 == CurrentX && ballY - 1 == CurrentY){
                                 kickBall(-1, 1);
                                 flagBallTrap =  false;
                             }
-                            if(BallX - 1 == CurrentX && BallY + 1 == CurrentY){
+                            if(ballX - 1 == CurrentX && ballY + 1 == CurrentY){
                                 kickBall(1, -1);
                                 flagBallTrap = false;
                             }
-                            if(BallX + 1 == CurrentX && BallY + 1 == CurrentY){
+                            if(ballX + 1 == CurrentX && ballY + 1 == CurrentY){
                                 kickBall(-1 , -1);
                                 flagBallTrap = false;
                             }
                         }
                         if(flagBallDribble){
-                            if(BallX - 1 == CurrentX && BallY - 1 == CurrentY){
+                            if(ballX - 1 == CurrentX && ballY - 1 == CurrentY){
                                 kickBall(2, 2);
                                 flagBallDribble = false;
                             }
-                            if(BallX + 1 == CurrentX && BallY - 1 == CurrentY){
+                            if(ballX + 1 == CurrentX && ballY - 1 == CurrentY){
                                 kickBall(-2, 2);
                                 flagBallDribble =  false;
                             }
-                            if(BallX - 1 == CurrentX && BallY + 1 == CurrentY){
+                            if(ballX - 1 == CurrentX && ballY + 1 == CurrentY){
                                 kickBall(2, -2);
                                 flagBallDribble = false;
                             }
-                            if(BallX + 1 == CurrentX && BallY + 1 == CurrentY){
+                            if(ballX + 1 == CurrentX && ballY + 1 == CurrentY){
                                 kickBall(-2, -2);
                                 flagBallDribble = false;
                             }
@@ -221,13 +226,33 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
         // Intercepts when the users kick the soccer ball
         intercept(HMessage.Direction.TOCLIENT, "ObjectUpdate", hMessage -> {
+            // {in:ObjectUpdate}{i:249715730}{i:3213}{i:10}{i:9}{i:1}{s:"1.0E-5"}{s:"1.0E-6"}{i:0}{i:0}{s:"44"}{i:-1}{i:0}{i:51157174}
             try {
-                int FurniID = hMessage.getPacket().readInteger();
-                if(FurniID == Integer.parseInt(textBallID.getText())){
-                    int UniqueID = hMessage.getPacket().readInteger();
-                    BallX = hMessage.getPacket().readInteger();
-                    BallY = hMessage.getPacket().readInteger();
-                    textBallCoords.setText("Ball Coords: (" + BallX + ", " + BallY + ")");
+                int furnitureId = hMessage.getPacket().readInteger();
+                if(furnitureId == Integer.parseInt(txtBallId.getText())){
+                    int UniqueId = hMessage.getPacket().readInteger();
+                    ballX = hMessage.getPacket().readInteger(); ballY = hMessage.getPacket().readInteger();
+                    int direction = hMessage.getPacket().readInteger();
+                    String zTile = hMessage.getPacket().readString();
+                    Platform.runLater(()-> textBallCoords.setText("Ball Coords: (" + ballX + ", " + ballY + ")"));
+                    if(checkDiagoKiller.isSelected()){
+                        // Diago Izquierda Abajo
+                        sendToClient(new HPacket(String.format(
+                                "{in:ObjectUpdate}{i:3}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
+                                txtUniqueId.getText(), ballX - 4, ballY + 4, zTile)));
+                        // Diago Derecha Abajo
+                        sendToClient(new HPacket(String.format(
+                                "{in:ObjectUpdate}{i:4}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
+                                txtUniqueId.getText(), ballX + 4, ballY + 4, zTile)));
+                        // Diago Izquierda Arriba
+                        sendToClient(new HPacket(String.format(
+                                "{in:ObjectUpdate}{i:5}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
+                                txtUniqueId.getText(), ballX - 4, ballY - 4, zTile)));
+                        // Diago Derecha Arriba
+                        sendToClient(new HPacket(String.format(
+                                "{in:ObjectUpdate}{i:6}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
+                                txtUniqueId.getText(), ballX + 4, ballY - 4, zTile)));
+                    }
                 }
             }
             catch (Exception ignored){ }
@@ -255,7 +280,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
             else if(checkBall.isSelected() && !checkDisableDouble.isSelected()){
                 int BallID = hMessage.getPacket().readInteger();
-                textBallID.setText(String.valueOf(BallID));
+                txtBallId.setText(String.valueOf(BallID));
                 checkBall.setSelected(false);
             }
         });
@@ -264,47 +289,47 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     public void kickBall(int PlusX, int PlusY){
         // Moves the tile in the client-side
         sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                1, 8237, BallX + PlusX, BallY + PlusY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                1, 8237, ballX + PlusX, ballY + PlusY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         // Moves the user in the server-side
-        sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + PlusX, BallY + PlusY));
+        sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + PlusX, ballY + PlusY));
         flagBallTrap = false;
     }
 
     public void Suggest(int ClickX, int ClickY){
         // Seria bueno en el futuro agregar una animacion del recorrido
-        if(ClickX == BallX - 1 && ClickY == BallY - 1){
+        if(ClickX == ballX - 1 && ClickY == ballY - 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, BallX + 6, BallY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX + 6, ballY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
-        else if(ClickX == BallX + 1 && ClickY == BallY + 1){
+        else if(ClickX == ballX + 1 && ClickY == ballY + 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, BallX - 6, BallY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX - 6, ballY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
-        else if(ClickX == BallX - 1 && ClickY == BallY + 1){
+        else if(ClickX == ballX - 1 && ClickY == ballY + 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, BallX + 6, BallY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX + 6, ballY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
-        else if(ClickX == BallX + 1 && ClickY == BallY - 1){
+        else if(ClickX == ballX + 1 && ClickY == ballY - 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, BallX - 6, BallY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX - 6, ballY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
 
-        if(ClickX == BallX - 1 && ClickY == BallY){
+        if(ClickX == ballX - 1 && ClickY == ballY){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, BallX + 6, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX + 6, ballY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
-        else if(ClickX == BallX + 1 && ClickY == BallY){
+        else if(ClickX == ballX + 1 && ClickY == ballY){
             System.out.println("6");
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, BallX - 6, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX - 6, ballY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
-        else if(ClickX == BallX && ClickY == BallY + 1){
+        else if(ClickX == ballX && ClickY == ballY + 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, BallX, BallY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX, ballY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
-        else if(ClickX == BallX && ClickY == BallY - 1){
+        else if(ClickX == ballX && ClickY == ballY - 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, BallX, BallY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX, ballY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
         }
         sendToClient(new HPacket("{in:Chat}{i:-1}{s:\"Remember to press the ESCAPE key to kick\"}{i:0}{i:30}{i:0}{i:0}"));
     }
@@ -373,8 +398,8 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     private void keyDoubleClick() {
         radioButtonDoubleClick.setSelected(true);
         sendToServer(new HPacket("UseFurniture", HMessage.Direction.TOSERVER,
-                Integer.parseInt(textBallID.getText()), 0));
-        sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT, 1, 8237, BallX, BallY,
+                Integer.parseInt(txtBallId.getText()), 0));
+        sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT, 1, 8237, ballX, ballY,
                 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
     }
 
@@ -383,75 +408,75 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         // En habbo futbol "Dribble" significa caminar, el usuario caminara dos casillas al frente del balon
 
         // Example -> Ball coords (8, 5) ; User up (8, 4)
-        if (BallX == CurrentX && BallY > CurrentY)
+        if (ballX == CurrentX && ballY > CurrentY)
         {
             kickBall(0 ,2);
         }
         // Example -> Ball coords (8, 5) ; User down (8, 6)
-        if (BallX == CurrentX && BallY < CurrentY)
+        if (ballX == CurrentX && ballY < CurrentY)
         {
             kickBall(0, -2);
         }
         // Example -> Ball coords (8, 5) ; User left (7, 5)
-        if (BallX > CurrentX && BallY == CurrentY)
+        if (ballX > CurrentX && ballY == CurrentY)
         {
             kickBall(2, 0);
         }
         // Example -> Ball coords (8, 5) ; User right (9, 5)
-        if (BallX < CurrentX && BallY == CurrentY)
+        if (ballX < CurrentX && ballY == CurrentY)
         {
             kickBall(-2 , 0);
         }
 
         // Example -> Ball coords (8, 5) ; User corner top left (7, 4)
-        if (BallX > CurrentX && BallY > CurrentY)
+        if (ballX > CurrentX && ballY > CurrentY)
         {
-            if(BallX - 1 == CurrentX && BallY - 1 == CurrentY){ // BallX - 2 == CurrentX && BallY - 2 == CurrentY
+            if(ballX - 1 == CurrentX && ballY - 1 == CurrentY){ // BallX - 2 == CurrentX && BallY - 2 == CurrentY
                 kickBall(2, 2);
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, BallX - 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY - 1));
+                        1, 8237, ballX - 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY - 1));
                 flagBallDribble =  true;
             }
         }
         // Example -> Ball coords (8, 5) ; User corner top right (9, 4)
-        if (BallX < CurrentX && BallY > CurrentY)
+        if (ballX < CurrentX && ballY > CurrentY)
         {
-            if(BallX + 1 == CurrentX && BallY - 1 == CurrentY){
+            if(ballX + 1 == CurrentX && ballY - 1 == CurrentY){
                 kickBall(-2 , 2);
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, BallX + 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY - 1));
+                        1, 8237, ballX + 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY - 1));
                 flagBallDribble =  true;
             }
         }
         // Example -> Ball coords (8, 5) ; User corner lower left (7, 6)
-        if (BallX > CurrentX && BallY < CurrentY)
+        if (ballX > CurrentX && ballY < CurrentY)
         {
-            if(BallX - 1 == CurrentX && BallY + 1 == CurrentY){
+            if(ballX - 1 == CurrentX && ballY + 1 == CurrentY){
                 kickBall(2, -2);
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, BallX - 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY + 1));
+                        1, 8237, ballX - 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY + 1));
                 flagBallDribble =  true;
             }
         }
         // Example -> Ball coords (8, 5) ; User corner lower right (9, 6)
-        if (BallX < CurrentX && BallY < CurrentY)
+        if (ballX < CurrentX && ballY < CurrentY)
         {
-            if(BallX + 1 == CurrentX && BallY + 1 == CurrentY){
+            if(ballX + 1 == CurrentX && ballY + 1 == CurrentY){
                 kickBall(-2 , -2);
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, BallX + 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY + 1));
+                        1, 8237, ballX + 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY + 1));
                 flagBallDribble =  true;
             }
         }
@@ -462,75 +487,75 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         // En habbo futbol "Trap" significa pisar, el usuario caminara una casilla al frente del balon
 
         // Example -> Ball coords (8, 5) ; User up (8, 4)
-        if (BallX == CurrentX && BallY > CurrentY)
+        if (ballX == CurrentX && ballY > CurrentY)
         {
             kickBall(0, 1);
         }
         // Example -> Ball coords (8, 5) ; User down (8, 6)
-        if (BallX == CurrentX && BallY < CurrentY)
+        if (ballX == CurrentX && ballY < CurrentY)
         {
             kickBall(0, -1);
         }
         // Example -> Ball coords (8, 5) ; User left (7, 5)
-        if (BallX > CurrentX && BallY == CurrentY)
+        if (ballX > CurrentX && ballY == CurrentY)
         {
             kickBall(1, 0);
         }
         // Example -> Ball coords (8, 5) ; User right (9, 5)
-        if (BallX < CurrentX && BallY == CurrentY)
+        if (ballX < CurrentX && ballY == CurrentY)
         {
             kickBall(-1, 0);
         }
 
         // Example -> Ball coords (8, 5) ; User corner top left (7, 4)
-        if (BallX > CurrentX && BallY > CurrentY)
+        if (ballX > CurrentX && ballY > CurrentY)
         {
-            if(BallX - 1 == CurrentX && BallY - 1 == CurrentY){
+            if(ballX - 1 == CurrentX && ballY - 1 == CurrentY){
                 kickBall(1, 1);
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, BallX - 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY - 1));
+                        1, 8237, ballX - 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY - 1));
                 flagBallTrap =  true;
             }
         }
         // Example -> Ball coords (8, 5) ; User corner top right (9, 4)
-        if (BallX < CurrentX && BallY > CurrentY)
+        if (ballX < CurrentX && ballY > CurrentY)
         {
-            if(BallX + 1 == CurrentX && BallY - 1 == CurrentY){
+            if(ballX + 1 == CurrentX && ballY - 1 == CurrentY){
                 kickBall(-1, 1);
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, BallX + 1, BallY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY - 1));
+                        1, 8237, ballX + 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY - 1));
                 flagBallTrap =  true;
             }
         }
         // Example -> Ball coords (8, 5) ; User corner lower left (7, 6)
-        if (BallX > CurrentX && BallY < CurrentY)
+        if (ballX > CurrentX && ballY < CurrentY)
         {
-            if(BallX - 1 == CurrentX && BallY + 1 == CurrentY){
+            if(ballX - 1 == CurrentX && ballY + 1 == CurrentY){
                 kickBall(1, -1);
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, BallX - 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX - 1, BallY + 1));
+                        1, 8237, ballX - 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY + 1));
                 flagBallTrap =  true;
             }
         }
         // Example -> Ball coords (8, 5) ; User corner lower right (9, 6)
-        if (BallX < CurrentX && BallY < CurrentY)
+        if (ballX < CurrentX && ballY < CurrentY)
         {
-            if(BallX + 1 == CurrentX && BallY + 1 == CurrentY){
+            if(ballX + 1 == CurrentX && ballY + 1 == CurrentY){
                 kickBall(-1 , -1);
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, BallX + 1, BallY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX + 1, BallY + 1));
+                        1, 8237, ballX + 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY + 1));
                 flagBallTrap =  true;
             }
         }
@@ -539,8 +564,8 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     private void keyShoot() {
         radioButtonShoot.setSelected(true);
         sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                1, 8237, BallX, BallY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
-        sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, BallX, BallY));
+                1, 8237, ballX, ballY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+        sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX, ballY));
     }
 
     @Override
@@ -548,8 +573,8 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
     public void handleGuideTile() {
         if(checkGuideTile.isSelected()){
-            sendToClient(new HPacket("ObjectAdd", HMessage.Direction.TOCLIENT, 1, 5399, 0
-                    , 0, 0, "0.0" /*"3.5"*/, "0.2", 0, 0, "1", -1, 1, 2, YourName));
+            sendToClient(new HPacket("ObjectAdd", HMessage.Direction.TOCLIENT, 1,
+                    Integer.parseInt(txtUniqueId.getText()), 0, 0, 0, "0.0" /*"3.5"*/, "0.2", 0, 0, "1", -1, 1, 2, YourName));
         }
         else {
             sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "1", false, 8636337, 0));
@@ -558,11 +583,42 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
     public void handleGuideTrap(){
         if(checkGuideTrap.isSelected()){
-            sendToClient(new HPacket("ObjectAdd", HMessage.Direction.TOCLIENT, 2, 5399, 0
-                    , 0, 0, "0.0", "0.2", 0, 0, "1", -1, 1, 2, YourName));
+            sendToClient(new HPacket("ObjectAdd", HMessage.Direction.TOCLIENT, 2,
+                    Integer.parseInt(txtUniqueId.getText()), 0, 0, 0, "0.0", "0.2", 0, 0, "1", -1, 1, 2, YourName));
         }
         else {
             sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "2", false, 8636337, 0));
+        }
+    }
+
+    public void handleDiagoKiller(ActionEvent actionEvent) {
+        CheckBox checkBox = (CheckBox) actionEvent.getSource();
+        if(checkBox.isSelected()){
+            // Diago Izquierda abajo
+            sendToClient(new HPacket(String.format(
+                    "{in:ObjectAdd}{i:3}{i:%s}{i:-4}{i:4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText())));
+
+            // Diago Derecha abajo
+            sendToClient(new HPacket(String.format(
+                    "{in:ObjectAdd}{i:4}{i:%s}{i:4}{i:4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText())));
+
+            // Diago Izquierda Arriba
+            sendToClient(new HPacket(String.format(
+                    "{in:ObjectAdd}{i:5}{i:%s}{i:-4}{i:-4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText())));
+
+            // Diago Derecha Arriba
+            sendToClient(new HPacket(String.format(
+                    "{in:ObjectAdd}{i:6}{i:%s}{i:4}{i:-4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText())));
+        }
+        else {
+            sendToClient(new HPacket("{in:ObjectRemove}{s:\"3\"}{b:false}{i:123}{i:0}"));
+            sendToClient(new HPacket("{in:ObjectRemove}{s:\"4\"}{b:false}{i:123}{i:0}"));
+            sendToClient(new HPacket("{in:ObjectRemove}{s:\"5\"}{b:false}{i:123}{i:0}"));
+            sendToClient(new HPacket("{in:ObjectRemove}{s:\"6\"}{b:false}{i:123}{i:0}"));
         }
     }
 }

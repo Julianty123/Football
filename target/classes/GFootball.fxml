@@ -10,8 +10,8 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="191.0" prefWidth="548.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GFootBall">
-   <TabPane layoutX="2.0" layoutY="4.0" prefHeight="217.0" prefWidth="546.0" tabClosingPolicy="UNAVAILABLE">
+<AnchorPane prefHeight="310.0" prefWidth="548.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GFootBall">
+   <TabPane layoutX="2.0" layoutY="4.0" prefHeight="259.0" prefWidth="546.0" tabClosingPolicy="UNAVAILABLE">
      <tabs>
          <Tab text="General">
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="186.0" prefWidth="670.0">
@@ -19,28 +19,30 @@
                   <Text fx:id="textYourCoords" layoutX="18.0" layoutY="24.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Coords: (0, 0)" textAlignment="CENTER" />
                   <Text fx:id="textIndex" layoutX="202.0" layoutY="24.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Index: -1" />
                   <CheckBox fx:id="checkDisableDouble" layoutX="372.0" layoutY="11.0" mnemonicParsing="false" text="Disable double click" />
-                  <CheckBox fx:id="checkGuideTile" layoutX="428.0" layoutY="75.0" mnemonicParsing="false" onAction="#handleGuideTile" text="Guide Tile" />
-                  <CheckBox fx:id="checkHideBubble" layoutX="420.0" layoutY="50.0" mnemonicParsing="false" selected="true" text="Hide Bubble" />
+                  <CheckBox fx:id="checkGuideTile" layoutX="135.0" layoutY="117.0" mnemonicParsing="false" onAction="#handleGuideTile" text="Show Guide Tile" />
+                  <CheckBox fx:id="checkHideBubble" layoutX="420.0" layoutY="54.0" mnemonicParsing="false" selected="true" text="Hide Bubble" />
                   <Text fx:id="textBallCoords" layoutX="21.0" layoutY="53.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Ball Coords: (0, 0)" textAlignment="CENTER" />
-                  <CheckBox fx:id="checkClickThrough" layoutX="398.0" layoutY="31.0" mnemonicParsing="false" onAction="#handleClickThrough" text="Click Through" />
-                  <TextField fx:id="textBallID" alignment="CENTER" editable="false" layoutX="25.0" layoutY="71.0" prefHeight="0.0" prefWidth="122.0" />
+                  <CheckBox fx:id="checkClickThrough" layoutX="398.0" layoutY="32.0" mnemonicParsing="false" onAction="#handleClickThrough" text="Click Through" />
+                  <TextField fx:id="txtBallId" alignment="CENTER" editable="false" layoutX="25.0" layoutY="71.0" prefHeight="0.0" prefWidth="122.0" />
                   <CheckBox fx:id="checkBall" layoutX="155.0" layoutY="76.0" mnemonicParsing="false" />
                   <CheckBox fx:id="checkGuideTrap" layoutX="215.0" layoutY="75.0" mnemonicParsing="false" onAction="#handleGuideTrap" text="Guide Trap" />
-                  <RadioButton fx:id="radioButtonShoot" layoutX="17.0" layoutY="110.0" mnemonicParsing="false" text="Shoot [Key F1]">
+                  <RadioButton fx:id="radioButtonShoot" layoutX="18.0" layoutY="155.0" mnemonicParsing="false" text="Shoot [Key F1]">
                      <toggleGroup>
                         <ToggleGroup fx:id="a" />
                      </toggleGroup>
                   </RadioButton>
-                  <RadioButton fx:id="radioButtonTrap" layoutX="148.0" layoutY="110.0" mnemonicParsing="false" text="Trap [Key F2]" toggleGroup="$a" />
-                  <RadioButton fx:id="radioButtonDribble" layoutX="14.0" layoutY="141.0" mnemonicParsing="false" text="Dribble [Key F3]" toggleGroup="$a" />
-                  <RadioButton fx:id="radioButtonDoubleClick" layoutX="148.0" layoutY="141.0" mnemonicParsing="false" text="DoubleClick [Key F4]" toggleGroup="$a" />
-                  <RadioButton fx:id="radioButtonWalk" layoutX="398.0" layoutY="141.0" mnemonicParsing="false" text="&quot;Walk&quot;">
+                  <RadioButton fx:id="radioButtonTrap" layoutX="149.0" layoutY="155.0" mnemonicParsing="false" text="Trap [Key F2]" toggleGroup="$a" />
+                  <RadioButton fx:id="radioButtonDribble" layoutX="15.0" layoutY="186.0" mnemonicParsing="false" text="Dribble [Key F3]" toggleGroup="$a" />
+                  <RadioButton fx:id="radioButtonDoubleClick" layoutX="149.0" layoutY="186.0" mnemonicParsing="false" text="DoubleClick [Key F4]" toggleGroup="$a" />
+                  <RadioButton fx:id="radioButtonWalk" layoutX="399.0" layoutY="186.0" mnemonicParsing="false" text="&quot;Walk&quot;">
                      <toggleGroup>
                         <ToggleGroup fx:id="b" />
                      </toggleGroup>
                   </RadioButton>
-                  <RadioButton fx:id="radioButtonRun" layoutX="359.0" layoutY="110.0" mnemonicParsing="false" selected="true" text="&quot;Run&quot;(recommended)" toggleGroup="$b" />
+                  <RadioButton fx:id="radioButtonRun" layoutX="360.0" layoutY="155.0" mnemonicParsing="false" selected="true" text="&quot;Run&quot;(recommended)" toggleGroup="$b" />
                   <Text fx:id="textYourName" layoutX="208.0" layoutY="53.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Name:" />
+                  <CheckBox fx:id="checkDiagoKiller" layoutX="297.0" layoutY="117.0" mnemonicParsing="false" onAction="#handleDiagoKiller" text="Show &quot;diagokiller&quot;" />
+                  <TextField fx:id="txtUniqueId" alignment="CENTER" layoutX="25.0" layoutY="112.0" prefHeight="31.0" prefWidth="82.0" promptText="unique Id" text="5399" />
                </children></AnchorPane>
          </Tab>
          <Tab text="Keys">
