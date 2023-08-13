@@ -16,7 +16,7 @@ import java.util.logging.LogManager;
 @ExtensionInfo(
         Title = "GFootBall",
         Description = "Known as Non DC Bot (bye Ahmed)",
-        Version = "1.0.6",
+        Version = "1.0.8",
         Author = "Julianty"
 )
 
@@ -34,7 +34,7 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener {
     public int YourIndex = -1;
     public boolean flagBallTrap = false, flagBallDribble = false, guideTrap = false;
     public TextField txtShoot, txtTrap, txtDribble, txtDoubleClick;
-    public Label labelShoot;
+    public Label labelShoot; // Lo instancie para darle el foco
 
     /*
     [StartTyping]

@@ -10,37 +10,37 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="216.0" prefWidth="498.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GFootBall">
-   <TabPane layoutX="2.0" layoutY="4.0" prefHeight="208.0" prefWidth="546.0" tabClosingPolicy="UNAVAILABLE">
+<AnchorPane prefHeight="191.0" prefWidth="548.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GFootBall">
+   <TabPane layoutX="2.0" layoutY="4.0" prefHeight="217.0" prefWidth="546.0" tabClosingPolicy="UNAVAILABLE">
      <tabs>
          <Tab text="General">
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="186.0" prefWidth="670.0">
                <children>
-                  <Text fx:id="textYourCoords" layoutX="33.0" layoutY="28.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Coords: (0, 0)" textAlignment="CENTER" />
-                  <Text fx:id="textIndex" layoutX="217.0" layoutY="28.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Index: -1" />
-                  <CheckBox fx:id="checkDisableDouble" layoutX="387.0" layoutY="15.0" mnemonicParsing="false" text="Disable double click" />
-                  <CheckBox fx:id="checkGuideTile" layoutX="443.0" layoutY="79.0" mnemonicParsing="false" onAction="#handleGuideTile" text="Guide Tile" />
-                  <CheckBox fx:id="checkHideBubble" layoutX="435.0" layoutY="54.0" mnemonicParsing="false" selected="true" text="Hide Bubble" />
-                  <Text fx:id="textBallCoords" layoutX="36.0" layoutY="57.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Ball Coords: (0, 0)" textAlignment="CENTER" />
-                  <CheckBox fx:id="checkClickThrough" layoutX="413.0" layoutY="35.0" mnemonicParsing="false" onAction="#handleClickThrough" text="Click Through" />
-                  <TextField fx:id="textBallID" alignment="CENTER" editable="false" layoutX="40.0" layoutY="75.0" prefHeight="0.0" prefWidth="122.0" />
-                  <CheckBox fx:id="checkBall" layoutX="170.0" layoutY="80.0" mnemonicParsing="false" />
-                  <CheckBox fx:id="checkGuideTrap" layoutX="230.0" layoutY="79.0" mnemonicParsing="false" onAction="#handleGuideTrap" text="Guide Trap" />
-                  <RadioButton fx:id="radioButtonShoot" layoutX="32.0" layoutY="114.0" mnemonicParsing="false" text="Shoot [Key F1]">
+                  <Text fx:id="textYourCoords" layoutX="18.0" layoutY="24.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Coords: (0, 0)" textAlignment="CENTER" />
+                  <Text fx:id="textIndex" layoutX="202.0" layoutY="24.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Index: -1" />
+                  <CheckBox fx:id="checkDisableDouble" layoutX="372.0" layoutY="11.0" mnemonicParsing="false" text="Disable double click" />
+                  <CheckBox fx:id="checkGuideTile" layoutX="428.0" layoutY="75.0" mnemonicParsing="false" onAction="#handleGuideTile" text="Guide Tile" />
+                  <CheckBox fx:id="checkHideBubble" layoutX="420.0" layoutY="50.0" mnemonicParsing="false" selected="true" text="Hide Bubble" />
+                  <Text fx:id="textBallCoords" layoutX="21.0" layoutY="53.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Ball Coords: (0, 0)" textAlignment="CENTER" />
+                  <CheckBox fx:id="checkClickThrough" layoutX="398.0" layoutY="31.0" mnemonicParsing="false" onAction="#handleClickThrough" text="Click Through" />
+                  <TextField fx:id="textBallID" alignment="CENTER" editable="false" layoutX="25.0" layoutY="71.0" prefHeight="0.0" prefWidth="122.0" />
+                  <CheckBox fx:id="checkBall" layoutX="155.0" layoutY="76.0" mnemonicParsing="false" />
+                  <CheckBox fx:id="checkGuideTrap" layoutX="215.0" layoutY="75.0" mnemonicParsing="false" onAction="#handleGuideTrap" text="Guide Trap" />
+                  <RadioButton fx:id="radioButtonShoot" layoutX="17.0" layoutY="110.0" mnemonicParsing="false" text="Shoot [Key F1]">
                      <toggleGroup>
                         <ToggleGroup fx:id="a" />
                      </toggleGroup>
                   </RadioButton>
-                  <RadioButton fx:id="radioButtonTrap" layoutX="163.0" layoutY="114.0" mnemonicParsing="false" text="Trap [Key F2]" toggleGroup="$a" />
-                  <RadioButton fx:id="radioButtonDribble" layoutX="29.0" layoutY="145.0" mnemonicParsing="false" text="Dribble [Key F3]" toggleGroup="$a" />
-                  <RadioButton fx:id="radioButtonDoubleClick" layoutX="163.0" layoutY="145.0" mnemonicParsing="false" text="DoubleClick [Key F4]" toggleGroup="$a" />
-                  <RadioButton fx:id="radioButtonWalk" layoutX="413.0" layoutY="145.0" mnemonicParsing="false" text="&quot;Walk&quot;">
+                  <RadioButton fx:id="radioButtonTrap" layoutX="148.0" layoutY="110.0" mnemonicParsing="false" text="Trap [Key F2]" toggleGroup="$a" />
+                  <RadioButton fx:id="radioButtonDribble" layoutX="14.0" layoutY="141.0" mnemonicParsing="false" text="Dribble [Key F3]" toggleGroup="$a" />
+                  <RadioButton fx:id="radioButtonDoubleClick" layoutX="148.0" layoutY="141.0" mnemonicParsing="false" text="DoubleClick [Key F4]" toggleGroup="$a" />
+                  <RadioButton fx:id="radioButtonWalk" layoutX="398.0" layoutY="141.0" mnemonicParsing="false" text="&quot;Walk&quot;">
                      <toggleGroup>
                         <ToggleGroup fx:id="b" />
                      </toggleGroup>
                   </RadioButton>
-                  <RadioButton fx:id="radioButtonRun" layoutX="374.0" layoutY="114.0" mnemonicParsing="false" selected="true" text="&quot;Run&quot;(recommended)" toggleGroup="$b" />
-                  <Text fx:id="textYourName" layoutX="223.0" layoutY="57.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Name:" />
+                  <RadioButton fx:id="radioButtonRun" layoutX="359.0" layoutY="110.0" mnemonicParsing="false" selected="true" text="&quot;Run&quot;(recommended)" toggleGroup="$b" />
+                  <Text fx:id="textYourName" layoutX="208.0" layoutY="53.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Name:" />
                </children></AnchorPane>
          </Tab>
          <Tab text="Keys">
