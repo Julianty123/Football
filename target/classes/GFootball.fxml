@@ -16,8 +16,8 @@
          <Tab text="General">
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="186.0" prefWidth="670.0">
                <children>
-                  <Text fx:id="textYourCoords" layoutX="18.0" layoutY="24.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Coords: (0, 0)" textAlignment="CENTER" />
-                  <Text fx:id="textIndex" layoutX="202.0" layoutY="24.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Index: -1" />
+                  <Text fx:id="textUserCoords" layoutX="18.0" layoutY="24.0" strokeType="OUTSIDE" strokeWidth="0.0" text="User Coords: (0, 0)" textAlignment="CENTER" />
+                  <Text fx:id="textUserIndex" layoutX="202.0" layoutY="24.0" strokeType="OUTSIDE" strokeWidth="0.0" text="User Index: -1" />
                   <CheckBox fx:id="checkDisableDouble" layoutX="372.0" layoutY="11.0" mnemonicParsing="false" text="Disable double click" />
                   <CheckBox fx:id="checkGuideTile" layoutX="135.0" layoutY="117.0" mnemonicParsing="false" onAction="#handleGuideTile" text="Show Guide Tile" />
                   <CheckBox fx:id="checkHideBubble" layoutX="420.0" layoutY="54.0" mnemonicParsing="false" selected="true" text="Hide Bubble" />
@@ -40,9 +40,9 @@
                      </toggleGroup>
                   </RadioButton>
                   <RadioButton fx:id="radioButtonRun" layoutX="360.0" layoutY="155.0" mnemonicParsing="false" selected="true" text="&quot;Run&quot;(recommended)" toggleGroup="$b" />
-                  <Text fx:id="textYourName" layoutX="208.0" layoutY="53.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Your Name:" />
                   <CheckBox fx:id="checkDiagoKiller" layoutX="297.0" layoutY="117.0" mnemonicParsing="false" onAction="#handleDiagoKiller" text="Show &quot;diagokiller&quot;" />
                   <TextField fx:id="txtUniqueId" alignment="CENTER" layoutX="25.0" layoutY="112.0" prefHeight="31.0" prefWidth="82.0" promptText="unique Id" text="5399" />
+                  <CheckBox fx:id="checkUserName" layoutX="178.0" layoutY="37.0" mnemonicParsing="false" text="User Name:" />
                </children></AnchorPane>
          </Tab>
          <Tab text="Keys">

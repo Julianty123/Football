@@ -11,13 +11,15 @@ import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
+
+import java.util.HashMap;
 import java.util.logging.LogManager;
 
 
 @ExtensionInfo(
         Title = "GFootBall",
-        Description = "Known as Non DC Bot (bye Ahmed)",
-        Version = "1.0.7",
+        Description = "Known as Non DC Bot",
+        Version = "1.0.9",
         Author = "Julianty"
 )
 
@@ -26,14 +28,21 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener {
     public TextField txtBallId;
     public RadioButton radioButtonShoot, radioButtonTrap, radioButtonDribble,
             radioButtonDoubleClick, radioButtonWalk, radioButtonRun;
-    public CheckBox checkBall, checkDisableDouble, checkClickThrough, checkGuideTile, checkHideBubble,
-            checkGuideTrap, checkDiagoKiller;
-    public Text textYourName, textIndex, textYourCoords, textBallCoords;
+    public CheckBox checkUserName, checkBall, checkDisableDouble, checkClickThrough, checkGuideTile,
+            checkHideBubble, checkGuideTrap, checkDiagoKiller;
+    public Text textUserIndex, textUserCoords, textBallCoords;
 
-    public String YourName;
+    public String userName;
     public int CurrentX, CurrentY, ballX, ballY;
     public int ClickX, ClickY;
-    public int YourIndex = -1;
+    public int userIndex = -1;
+
+    public int userIdSelected = -1;
+
+    HashMap<Integer,Integer> hashUserIdAndIndex = new HashMap<>();
+    HashMap<Integer,String> hashUserIdAndName = new HashMap<>();
+
+
     public boolean flagBallTrap = false, flagBallDribble = false, guideTrap = false;
     public TextField txtShoot, txtTrap, txtDribble, txtDoubleClick, txtUniqueId;
     public Label labelShoot; // Lo instancie para darle el foco
@@ -61,11 +70,9 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
     @Override
     protected void onShow() {
-        // sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER)); // When its sent, gets UserObject packet
-        // sendToServer(new HPacket("AvatarExpression", HMessage.Direction.TOSERVER, 0));  // With this it's not necessary to restart the room
-        sendToServer(new HPacket("{out:InfoRetrieve}"));
-        sendToServer(new HPacket("{out:AvatarExpression}{i:0}"));
-
+        sendToServer(new HPacket("{out:InfoRetrieve}")); // When its sent, gets UserObject packet
+        sendToServer(new HPacket("{out:AvatarExpression}{i:0}")); // With this it's not necessary to restart the room
+        sendToServer(new HPacket("{out:GetHeightMap}"));    // Get Flooritems, Wallitems, etc. Without restart room
 
         LogManager.getLogManager().reset(); // https://stackoverflow.com/questions/30560212/how-to-remove-the-logging-data-from-jnativehook-library
         try {
@@ -83,7 +90,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
     @Override
     protected void onHide() {
-        YourIndex = -1;
+        userIndex = -1;
         sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "1" /* "1" = id */, false, 8636337, 0));
         sendToClient(new HPacket("{in:ObjectRemove}{s:\"2\"}{b:false}{i:8636337}{i:0}"));
 
@@ -105,16 +112,16 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         // Response of packet InfoRetrieve
         intercept(HMessage.Direction.TOCLIENT, "UserObject", hMessage -> {
             // Gets ID and Name in order.
-            int YourID = hMessage.getPacket().readInteger();    YourName = hMessage.getPacket().readString();
-            textYourName.setText("Your Name: " + YourName);    // No es necesario usar Platform.runLater()
+            int YourID = hMessage.getPacket().readInteger();    userName = hMessage.getPacket().readString();
+            Platform.runLater(()-> checkUserName.setText("User Name: " + userName)); // TextField no necesita usar Platform.runLater(..)
         });
 
         // Response of packet AvatarExpression (gets userIndex)
         intercept(HMessage.Direction.TOCLIENT, "Expression", hMessage -> {
             // First integer is index in room, second is animation id, i think
-            if(primaryStage.isShowing() && YourIndex == -1){ // this could avoid any bug
-                YourIndex = hMessage.getPacket().readInteger();
-                textIndex.setText("Your Index: " + YourIndex);  // GUI updated!
+            if(primaryStage.isShowing() && userIndex == -1){ // this could avoid any bug
+                userIndex = hMessage.getPacket().readInteger();
+                textUserIndex.setText("User Index: " + userIndex);  // GUI updated!
             }
         });
 
@@ -127,6 +134,21 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
         intercept(HMessage.Direction.TOCLIENT, "RoomReady", hMessage -> {
             System.out.println("RoomReady");
+            hashUserIdAndIndex.clear(); hashUserIdAndName.clear();
+        });
+
+        intercept(HMessage.Direction.TOSERVER, "GetSelectedBadges", hMessage -> {
+            try {
+                userIdSelected = hMessage.getPacket().readInteger();
+                if(checkUserName.isSelected()){
+                    userIndex = hashUserIdAndIndex.get(userIdSelected); userName = hashUserIdAndName.get(userIdSelected);
+                    Platform.runLater(() -> {
+                        textUserIndex.setText("User Index: " + userIndex);
+                        checkUserName.setText("User Name: "+ userName);
+                        checkUserName.setSelected(false);
+                    });
+                }
+            }catch (NullPointerException ignored){}
         });
 
         // Intercepts this packet when you enter or any user arrive to the room
@@ -135,9 +157,9 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                 HPacket hPacket = hMessage.getPacket();
                 HEntity[] roomUsersList = HEntity.parse(hPacket);
                 for (HEntity hEntity: roomUsersList){
-                    if(YourName.equals(hEntity.getName())){
-                        YourIndex = hEntity.getIndex();
-                    }
+                    // If the key already exists, it will be replaced
+                    hashUserIdAndIndex.put(hEntity.getId(), hEntity.getIndex());
+                    hashUserIdAndName.put(hEntity.getId(), hEntity.getName());
                 }
             } catch (NullPointerException ignored) { }
             if(checkClickThrough.isSelected()){
@@ -151,9 +173,9 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             // The HEntityUpdate class allows obtain the index of the user who is walking and other things
             for (HEntityUpdate hEntityUpdate: HEntityUpdate.parse(hPacket)){
                 try {
-                    int CurrentIndex = hEntityUpdate.getIndex();
-                    if(CurrentIndex == YourIndex){
-                        textIndex.setText("Your Index: " + CurrentIndex);
+                    int currentIndex = hEntityUpdate.getIndex();
+                    if(currentIndex == userIndex){
+                        textUserIndex.setText("User Index: " + currentIndex);
 
                         int JokerX = hEntityUpdate.getTile().getX(); int JokerY = hEntityUpdate.getTile().getY(); // Necesario para el modo de trap
                         if(checkGuideTrap.isSelected()){
@@ -172,7 +194,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                         if(radioButtonWalk.isSelected()){
                             CurrentX = hEntityUpdate.getTile().getX();  CurrentY = hEntityUpdate.getTile().getY();
                         }
-                        textYourCoords.setText("Your Coords: (" + CurrentX + ", " + CurrentY + ")");
+                        textUserCoords.setText("User Coords: (" + CurrentX + ", " + CurrentY + ")");
 
                         if(flagBallTrap){
                             if(ballX - 1 == CurrentX && ballY - 1 == CurrentY){
@@ -225,7 +247,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         });
 
         // Intercepts when the users kick the soccer ball
-        intercept(HMessage.Direction.TOCLIENT, "ObjectUpdate", hMessage -> {
+        intercept(HMessage.Direction.TOCLIENT, "ObjectUpdate", hMessage -> { //  SlideObjectBundle
             // {in:ObjectUpdate}{i:249715730}{i:3213}{i:10}{i:9}{i:1}{s:"1.0E-5"}{s:"1.0E-6"}{i:0}{i:0}{s:"44"}{i:-1}{i:0}{i:51157174}
             try {
                 int furnitureId = hMessage.getPacket().readInteger();
@@ -289,7 +311,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     public void kickBall(int PlusX, int PlusY){
         // Moves the tile in the client-side
         sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                1, 8237, ballX + PlusX, ballY + PlusY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                1, 8237, ballX + PlusX, ballY + PlusY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         // Moves the user in the server-side
         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + PlusX, ballY + PlusY));
         flagBallTrap = false;
@@ -299,37 +321,37 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         // Seria bueno en el futuro agregar una animacion del recorrido
         if(ClickX == ballX - 1 && ClickY == ballY - 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, ballX + 6, ballY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX + 6, ballY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         }
         else if(ClickX == ballX + 1 && ClickY == ballY + 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, ballX - 6, ballY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX - 6, ballY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         }
         else if(ClickX == ballX - 1 && ClickY == ballY + 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, ballX + 6, ballY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX + 6, ballY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         }
         else if(ClickX == ballX + 1 && ClickY == ballY - 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, ballX - 6, ballY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX - 6, ballY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         }
 
         if(ClickX == ballX - 1 && ClickY == ballY){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, ballX + 6, ballY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX + 6, ballY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         }
         else if(ClickX == ballX + 1 && ClickY == ballY){
             System.out.println("6");
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, ballX - 6, ballY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX - 6, ballY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         }
         else if(ClickX == ballX && ClickY == ballY + 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, ballX, ballY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX, ballY - 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         }
         else if(ClickX == ballX && ClickY == ballY - 1){
             sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                    2, 8237, ballX, ballY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                    2, 8237, ballX, ballY + 6, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         }
         sendToClient(new HPacket("{in:Chat}{i:-1}{s:\"Remember to press the ESCAPE key to kick\"}{i:0}{i:30}{i:0}{i:0}"));
     }
@@ -400,7 +422,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         sendToServer(new HPacket("UseFurniture", HMessage.Direction.TOSERVER,
                 Integer.parseInt(txtBallId.getText()), 0));
         sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT, 1, 8237, ballX, ballY,
-                0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
     }
 
     private void keyDribble() {
@@ -436,7 +458,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, ballX - 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                        1, 8237, ballX - 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
                 sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY - 1));
                 flagBallDribble =  true;
             }
@@ -449,7 +471,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, ballX + 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                        1, 8237, ballX + 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
                 sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY - 1));
                 flagBallDribble =  true;
             }
@@ -462,7 +484,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, ballX - 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                        1, 8237, ballX - 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
                 sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY + 1));
                 flagBallDribble =  true;
             }
@@ -475,7 +497,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, ballX + 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                        1, 8237, ballX + 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
                 sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY + 1));
                 flagBallDribble =  true;
             }
@@ -515,7 +537,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, ballX - 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                        1, 8237, ballX - 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
                 sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY - 1));
                 flagBallTrap =  true;
             }
@@ -528,7 +550,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, ballX + 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                        1, 8237, ballX + 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
                 sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY - 1));
                 flagBallTrap =  true;
             }
@@ -541,7 +563,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, ballX - 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                        1, 8237, ballX - 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
                 sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY + 1));
                 flagBallTrap =  true;
             }
@@ -554,7 +576,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
             else {
                 sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                        1, 8237, ballX + 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                        1, 8237, ballX + 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
                 sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY + 1));
                 flagBallTrap =  true;
             }
@@ -564,7 +586,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     private void keyShoot() {
         radioButtonShoot.setSelected(true);
         sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
-                1, 8237, ballX, ballY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, YourName));
+                1, 8237, ballX, ballY, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX, ballY));
     }
 
@@ -574,7 +596,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     public void handleGuideTile() {
         if(checkGuideTile.isSelected()){
             sendToClient(new HPacket("ObjectAdd", HMessage.Direction.TOCLIENT, 1,
-                    Integer.parseInt(txtUniqueId.getText()), 0, 0, 0, "0.0" /*"3.5"*/, "0.2", 0, 0, "1", -1, 1, 2, YourName));
+                    Integer.parseInt(txtUniqueId.getText()), 0, 0, 0, "0.0" /*"3.5"*/, "0.2", 0, 0, "1", -1, 1, 2, userName));
         }
         else {
             sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "1", false, 8636337, 0));
@@ -584,7 +606,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     public void handleGuideTrap(){
         if(checkGuideTrap.isSelected()){
             sendToClient(new HPacket("ObjectAdd", HMessage.Direction.TOCLIENT, 2,
-                    Integer.parseInt(txtUniqueId.getText()), 0, 0, 0, "0.0", "0.2", 0, 0, "1", -1, 1, 2, YourName));
+                    Integer.parseInt(txtUniqueId.getText()), 0, 0, 0, "0.0", "0.2", 0, 0, "1", -1, 1, 2, userName));
         }
         else {
             sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "2", false, 8636337, 0));
