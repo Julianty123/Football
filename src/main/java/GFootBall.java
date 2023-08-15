@@ -27,7 +27,7 @@ import java.util.logging.LogManager;
 public class GFootBall extends ExtensionForm implements NativeKeyListener {
     public TextField txtBallId;
     public RadioButton radioButtonShoot, radioButtonTrap, radioButtonDribble,
-            radioButtonDoubleClick, radioButtonWalk, radioButtonRun;
+            radioButtonDoubleClick, radioButtonMix, radioButtonWalk, radioButtonRun;
     public CheckBox checkUserName, checkBall, checkDisableDouble, checkClickThrough, checkGuideTile,
             checkHideBubble, checkGuideTrap, checkDiagoKiller;
     public Text textUserIndex, textUserCoords, textBallCoords;
@@ -42,9 +42,8 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener {
     HashMap<Integer,Integer> hashUserIdAndIndex = new HashMap<>();
     HashMap<Integer,String> hashUserIdAndName = new HashMap<>();
 
-
     public boolean flagBallTrap = false, flagBallDribble = false, guideTrap = false;
-    public TextField txtShoot, txtTrap, txtDribble, txtDoubleClick, txtUniqueId;
+    public TextField txtShoot, txtTrap, txtDribble, txtDoubleClick, txtMix, txtUniqueId;
     public Label labelShoot; // Lo instancie para darle el foco
 
     /*
@@ -377,7 +376,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         flagBallTrap = false;   flagBallDribble = false;    // restart booleans
 
         String keyText = NativeKeyEvent.getKeyText(nativeKeyEvent.getKeyCode());
-        TextInputControl[] txtFieldsHotKeys = new TextInputControl[]{txtShoot, txtTrap, txtDribble, txtDoubleClick};
+        TextInputControl[] txtFieldsHotKeys = new TextInputControl[]{txtShoot, txtTrap, txtDribble, txtDoubleClick, txtMix};
         /* When the key is released, somehow the loop stops, however it reduces performance and fails sometimes, sorry :/
         new Thread(() -> { }).start();*/
         for(TextInputControl element: txtFieldsHotKeys){
@@ -394,6 +393,9 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                 }
                 else if(element.equals(txtDoubleClick)){
                     Platform.runLater(()-> radioButtonDoubleClick.setText(String.format("DoubleClick [Key %s]", keyText)));
+                }
+                else if(element.equals(txtMix)){
+                    Platform.runLater(()-> radioButtonMix.setText(String.format("Mix (Trap & Dribble) [Key %s]", keyText)));
                 }
                 // lastInputControl = element;
                 Platform.runLater(labelShoot::requestFocus);    // Al parecer darle el foco a un label sin modificar es la mejor opcion
@@ -412,6 +414,9 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                     else if(keyText.equals(txtDoubleClick.getText())){
                         keyDoubleClick();
                     }
+                    else if(keyText.equals(txtMix.getText())){
+                        keyMix();
+                    }
                 }
             }
         }
@@ -419,8 +424,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
     private void keyDoubleClick() {
         radioButtonDoubleClick.setSelected(true);
-        sendToServer(new HPacket("UseFurniture", HMessage.Direction.TOSERVER,
-                Integer.parseInt(txtBallId.getText()), 0));
+        sendToServer(new HPacket(String.format("{out:UseFurniture}{i:%d}{i:0}", Integer.parseInt(txtBallId.getText()))));
         sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT, 1, 8237, ballX, ballY,
                 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
     }
@@ -430,29 +434,24 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         // En habbo futbol "Dribble" significa caminar, el usuario caminara dos casillas al frente del balon
 
         // Example -> Ball coords (8, 5) ; User up (8, 4)
-        if (ballX == CurrentX && ballY > CurrentY)
-        {
+        if (ballX == CurrentX && ballY > CurrentY) {
             kickBall(0 ,2);
         }
         // Example -> Ball coords (8, 5) ; User down (8, 6)
-        if (ballX == CurrentX && ballY < CurrentY)
-        {
+        if (ballX == CurrentX && ballY < CurrentY) {
             kickBall(0, -2);
         }
         // Example -> Ball coords (8, 5) ; User left (7, 5)
-        if (ballX > CurrentX && ballY == CurrentY)
-        {
+        if (ballX > CurrentX && ballY == CurrentY) {
             kickBall(2, 0);
         }
         // Example -> Ball coords (8, 5) ; User right (9, 5)
-        if (ballX < CurrentX && ballY == CurrentY)
-        {
+        if (ballX < CurrentX && ballY == CurrentY) {
             kickBall(-2 , 0);
         }
 
         // Example -> Ball coords (8, 5) ; User corner top left (7, 4)
-        if (ballX > CurrentX && ballY > CurrentY)
-        {
+        if (ballX > CurrentX && ballY > CurrentY) {
             if(ballX - 1 == CurrentX && ballY - 1 == CurrentY){ // BallX - 2 == CurrentX && BallY - 2 == CurrentY
                 kickBall(2, 2);
             }
@@ -464,8 +463,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
         }
         // Example -> Ball coords (8, 5) ; User corner top right (9, 4)
-        if (ballX < CurrentX && ballY > CurrentY)
-        {
+        if (ballX < CurrentX && ballY > CurrentY) {
             if(ballX + 1 == CurrentX && ballY - 1 == CurrentY){
                 kickBall(-2 , 2);
             }
@@ -477,8 +475,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
         }
         // Example -> Ball coords (8, 5) ; User corner lower left (7, 6)
-        if (ballX > CurrentX && ballY < CurrentY)
-        {
+        if (ballX > CurrentX && ballY < CurrentY) {
             if(ballX - 1 == CurrentX && ballY + 1 == CurrentY){
                 kickBall(2, -2);
             }
@@ -490,8 +487,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
             }
         }
         // Example -> Ball coords (8, 5) ; User corner lower right (9, 6)
-        if (ballX < CurrentX && ballY < CurrentY)
-        {
+        if (ballX < CurrentX && ballY < CurrentY) {
             if(ballX + 1 == CurrentX && ballY + 1 == CurrentY){
                 kickBall(-2 , -2);
             }
@@ -509,29 +505,24 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         // En habbo futbol "Trap" significa pisar, el usuario caminara una casilla al frente del balon
 
         // Example -> Ball coords (8, 5) ; User up (8, 4)
-        if (ballX == CurrentX && ballY > CurrentY)
-        {
+        if (ballX == CurrentX && ballY > CurrentY) {
             kickBall(0, 1);
         }
         // Example -> Ball coords (8, 5) ; User down (8, 6)
-        if (ballX == CurrentX && ballY < CurrentY)
-        {
+        if (ballX == CurrentX && ballY < CurrentY) {
             kickBall(0, -1);
         }
         // Example -> Ball coords (8, 5) ; User left (7, 5)
-        if (ballX > CurrentX && ballY == CurrentY)
-        {
+        if (ballX > CurrentX && ballY == CurrentY) {
             kickBall(1, 0);
         }
         // Example -> Ball coords (8, 5) ; User right (9, 5)
-        if (ballX < CurrentX && ballY == CurrentY)
-        {
+        if (ballX < CurrentX && ballY == CurrentY) {
             kickBall(-1, 0);
         }
 
         // Example -> Ball coords (8, 5) ; User corner top left (7, 4)
-        if (ballX > CurrentX && ballY > CurrentY)
-        {
+        if (ballX > CurrentX && ballY > CurrentY) {
             if(ballX - 1 == CurrentX && ballY - 1 == CurrentY){
                 kickBall(1, 1);
             }
@@ -581,6 +572,101 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                 flagBallTrap =  true;
             }
         }
+    }
+
+    private void keyMix(){
+        radioButtonMix.setSelected(true);
+        // Esta caracteristica es una union de Trap y Dribble
+
+        new Thread(()->{
+            // Example -> Ball coords (8, 5) ; User up (8, 4)
+            int delay = 500;
+            try {
+                if (ballX == CurrentX && ballY > CurrentY) {
+                    kickBall(0, 1); // Trap
+                    Thread.sleep(delay);
+                    kickBall(0, 2); // Dribble
+                }
+                // Example -> Ball coords (8, 5) ; User down (8, 6)
+                if (ballX == CurrentX && ballY < CurrentY) {
+                    kickBall(0, -1);
+                    Thread.sleep(delay);
+                    kickBall(0, -2);
+                }
+                // Example -> Ball coords (8, 5) ; User left (7, 5)
+                if (ballX > CurrentX && ballY == CurrentY) {
+                    kickBall(1, 0);
+                    Thread.sleep(delay);
+                    kickBall(2, 0);
+                }
+                // Example -> Ball coords (8, 5) ; User right (9, 5)
+                if (ballX < CurrentX && ballY == CurrentY) {
+                    kickBall(-1, 0);
+                    Thread.sleep(delay);
+                    kickBall(-2, 0);
+                }
+
+                // Example -> Ball coords (8, 5) ; User corner top left (7, 4)
+                if (ballX > CurrentX && ballY > CurrentY) {
+                    if(ballX - 1 == CurrentX && ballY - 1 == CurrentY){
+                        kickBall(1, 1);
+                        Thread.sleep(delay);
+                        kickBall(2, 2);
+                    }
+                    else {
+                        sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                                1, 8237, ballX - 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
+                        sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY - 1));
+                        flagBallTrap =  true;
+                    }
+                }
+                // Example -> Ball coords (8, 5) ; User corner top right (9, 4)
+                if (ballX < CurrentX && ballY > CurrentY)
+                {
+                    if(ballX + 1 == CurrentX && ballY - 1 == CurrentY){
+                        kickBall(-1, 1);
+                        Thread.sleep(delay);
+                        kickBall(-2, 2);
+                    }
+                    else {
+                        sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                                1, 8237, ballX + 1, ballY - 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
+                        sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY - 1));
+                        flagBallTrap =  true;
+                    }
+                }
+                // Example -> Ball coords (8, 5) ; User corner lower left (7, 6)
+                if (ballX > CurrentX && ballY < CurrentY) {
+                    if(ballX - 1 == CurrentX && ballY + 1 == CurrentY){
+                        kickBall(1, -1);
+                        Thread.sleep(delay);
+                        kickBall(2, -2);
+                    }
+                    else {
+                        sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                                1, 8237, ballX - 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
+                        sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX - 1, ballY + 1));
+                        flagBallTrap =  true;
+                    }
+                }
+                // Example -> Ball coords (8, 5) ; User corner lower right (9, 6)
+                if (ballX < CurrentX && ballY < CurrentY) {
+                    if(ballX + 1 == CurrentX && ballY + 1 == CurrentY){
+                        kickBall(-1 , -1);
+                        Thread.sleep(delay);
+                        kickBall(-2, -2);
+                    }
+                    else {
+                        sendToClient(new HPacket("ObjectUpdate", HMessage.Direction.TOCLIENT,
+                                1, 8237, ballX + 1, ballY + 1, 0, "0.0", "1.0", 0, 0, 1, 822083583, 2, userName));
+                        sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, ballX + 1, ballY + 1));
+                        flagBallTrap =  true;
+                    }
+                }
+            } catch (InterruptedException ignored) {
+
+            }
+        }).start();
     }
 
     private void keyShoot() {
