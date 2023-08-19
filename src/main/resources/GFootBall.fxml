@@ -25,7 +25,7 @@
                   <CheckBox fx:id="checkClickThrough" layoutX="398.0" layoutY="32.0" mnemonicParsing="false" onAction="#handleClickThrough" text="Click Through" />
                   <TextField fx:id="txtBallId" alignment="CENTER" editable="false" layoutX="25.0" layoutY="71.0" prefHeight="0.0" prefWidth="122.0" />
                   <CheckBox fx:id="checkBall" layoutX="155.0" layoutY="76.0" mnemonicParsing="false" />
-                  <CheckBox fx:id="checkGuideTrap" layoutX="215.0" layoutY="75.0" mnemonicParsing="false" onAction="#handleGuideTrap" text="Guide Trap" />
+                  <CheckBox fx:id="checkGuideTrap" layoutX="192.0" layoutY="76.0" mnemonicParsing="false" onAction="#handleGuideTrap" text="Guide Trap" />
                   <RadioButton fx:id="radioButtonShoot" layoutX="18.0" layoutY="155.0" mnemonicParsing="false" text="Shoot [Key F1]">
                      <toggleGroup>
                         <ToggleGroup fx:id="a" />
@@ -58,6 +58,14 @@
                <TextField fx:id="txtDoubleClick" alignment="CENTER" layoutX="264.0" layoutY="45.0" prefHeight="26.0" prefWidth="45.0" text="F4" />
                <Label layoutX="331.0" layoutY="19.0" text="Mix:" />
                <TextField fx:id="txtMix" alignment="CENTER" layoutX="368.0" layoutY="14.0" prefHeight="26.0" prefWidth="45.0" text="F5" />
+               <Label layoutX="30.0" layoutY="117.0" text="Upper left follower" />
+               <Label layoutX="233.0" layoutY="117.0" text="Upper right follower" />
+               <Label layoutX="31.0" layoutY="170.0" text="Lower left follower" />
+               <Label layoutX="227.0" layoutY="170.0" text="Lower right follower" />
+               <TextField fx:id="txtUpperLeft" alignment="CENTER" layoutX="160.0" layoutY="112.0" prefHeight="31.0" prefWidth="43.0" text="1" />
+               <TextField fx:id="txtUpperRight" alignment="CENTER" layoutX="378.0" layoutY="112.0" prefHeight="31.0" prefWidth="43.0" text="2" />
+               <TextField fx:id="txtLowerLeft" alignment="CENTER" layoutX="160.0" layoutY="165.0" prefHeight="31.0" prefWidth="43.0" text="3" />
+               <TextField fx:id="txtLowerRight" alignment="CENTER" layoutX="369.0" layoutY="165.0" prefHeight="31.0" prefWidth="43.0" text="4" />
              </AnchorPane>
          </Tab>
      </tabs>

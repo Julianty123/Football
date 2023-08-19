@@ -20,7 +20,7 @@ import java.util.logging.LogManager;
 @ExtensionInfo(
         Title = "GFootBall",
         Description = "Known as Non DC Bot",
-        Version = "1.1.0",
+        Version = "1.1.1",
         Author = "Julianty"
 )
 
@@ -43,10 +43,14 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener {
     HashMap<Integer,Integer> hashUserIdAndIndex = new HashMap<>();
     HashMap<Integer,String> hashUserIdAndName = new HashMap<>();
 
-    Map<Integer, HPoint> coords = new HashMap<>();
+    Map<Integer, HPoint> userCoords = new HashMap<>();
 
     public boolean flagBallTrap = false, flagBallDribble = false, guideTrap = false;
     public TextField txtShoot, txtTrap, txtDribble, txtDoubleClick, txtMix, txtUniqueId;
+
+    public TextField txtUpperLeft, txtUpperRight, txtLowerLeft, txtLowerRight;
+
+
     public Label labelShoot; // Lo instancie para darle el foco
 
     /*
@@ -176,8 +180,8 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                 try {
                     int currentIndex = hEntityUpdate.getIndex();
 
-                    // Add and update user-coords in the map
-                    if(hEntityUpdate.getMovingTo() != null){ coords.put(currentIndex, hEntityUpdate.getMovingTo()); }
+                    // If the coordinate already exist, it will be updated
+                    if(hEntityUpdate.getMovingTo() != null) userCoords.put(currentIndex, hEntityUpdate.getMovingTo());
 
                     if(currentIndex == userIndex){
                         textUserIndex.setText("User Index: " + currentIndex);
@@ -252,60 +256,34 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                     int UniqueId = hMessage.getPacket().readInteger();
                     ballX = hMessage.getPacket().readInteger(); ballY = hMessage.getPacket().readInteger();
                     int direction = hMessage.getPacket().readInteger(); String zTile = hMessage.getPacket().readString();
+                    String idk = hMessage.getPacket().readString();
+                    int idk1 = hMessage.getPacket().readInteger(); int idk2 = hMessage.getPacket().readInteger();
+                    String furnitureState = hMessage.getPacket().readString();
 
                     Platform.runLater(()-> textBallCoords.setText("Ball Coords: (" + ballX + ", " + ballY + ")"));
-                    if(checkDiagoKiller.isSelected()){
-                        sendToClient(new HPacket(String.format(
-                                "{in:ObjectUpdate}{i:3}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
-                                txtUniqueId.getText(), ballX - 4, ballY + 4, zTile))); // Diago Izquierda Abajo
-
-                        sendToClient(new HPacket(String.format(
-                                "{in:ObjectUpdate}{i:4}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
-                                txtUniqueId.getText(), ballX + 4, ballY + 4, zTile))); // Diago Derecha Abajo
-
-                        sendToClient(new HPacket(String.format(
-                                "{in:ObjectUpdate}{i:5}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
-                                txtUniqueId.getText(), ballX - 4, ballY - 4, zTile))); // Diago Izquierda Arriba
-
-                        sendToClient(new HPacket(String.format(
-                                "{in:ObjectUpdate}{i:6}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
-                                txtUniqueId.getText(), ballX + 4, ballY - 4, zTile))); // Diago Derecha Arriba
-
-                        sendToClient(new HPacket(String.format(
-                                "{in:ObjectUpdate}{i:7}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
-                                txtUniqueId.getText(), ballX - 4, ballY, zTile))); // Izquierda
-
-                        sendToClient(new HPacket(String.format(
-                                "{in:ObjectUpdate}{i:8}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
-                                txtUniqueId.getText(), ballX + 4, ballY, zTile))); // Derecha
-
-                        sendToClient(new HPacket(String.format(
-                                "{in:ObjectUpdate}{i:9}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
-                                txtUniqueId.getText(), ballX, ballY - 4, zTile))); // Arriba
-
-                        sendToClient(new HPacket(String.format(
-                                "{in:ObjectUpdate}{i:10}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"1\"}{i:-1}{i:1}{i:123}",
-                                txtUniqueId.getText(), ballX, ballY + 4, zTile))); // Abajo
-                    }
+                    if(checkDiagoKiller.isSelected()) tileInClient(zTile);
                 }
             }
             catch (Exception ignored){ }
         });
 
-        /* When you move ball with admin rights, useful in holos i think, so ignore this (structure packet it could changes)
+        // When you move ball with admin rights, or something like that (Happens in some holos, Wtf?)
         intercept(HMessage.Direction.TOCLIENT, "SlideObjectBundle", hMessage -> {
+            // {in:SlideObjectBundle}{i:4}{i:11}{i:5}{i:10}{i:1}{i:5451413}{s:"0.0"}{s:"0.0"}{i:5451413}
             try {
-                int FurniID = hMessage.getPacket().readInteger();
-                int UniqueID = hMessage.getPacket().readInteger();
-                int X = hMessage.getPacket().readInteger();
-                int Y = hMessage.getPacket().readInteger();
-                if(FurniID == Integer.parseInt(textBallID.getText())){
-                    BallX = X; BallY = Y;
-                    textBallCoords.setText("Ball Coords: (" + BallX + ", " + BallY + ")");
+                int oldX = hMessage.getPacket().readInteger(); int oldY = hMessage.getPacket().readInteger();
+                int newX = hMessage.getPacket().readInteger(); int newY = hMessage.getPacket().readInteger();
+                int direction = hMessage.getPacket().readInteger(); int furnitureId = hMessage.getPacket().readInteger();
+                String zTile = hMessage.getPacket().readString();
+                if(furnitureId == Integer.parseInt(txtBallId.getText())){
+                    ballX = newX; ballY = newY;
+                    Platform.runLater(()-> textBallCoords.setText("Ball Coords: (" + ballX + ", " + ballY + ")"));
+                    textBallCoords.setText("Ball Coords: (" + ballX + ", " + ballY + ")");
+                    if(checkDiagoKiller.isSelected()) tileInClient(zTile);
                 }
             }
             catch (Exception ignored){ }
-        }); */
+        });
 
         // Intercepts when you give double click on a furniture
         intercept(HMessage.Direction.TOSERVER, "UseFurniture", hMessage -> {
@@ -316,6 +294,40 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                 checkBall.setSelected(false);
             }
         });
+    }
+
+    private void tileInClient(String zTile) {
+        sendToClient(new HPacket(String.format(
+                "{in:ObjectUpdate}{i:3}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:1}{i:123}",
+                txtUniqueId.getText(), ballX - 4, ballY + 4, zTile))); // Diago Izquierda Abajo
+
+        sendToClient(new HPacket(String.format(
+                "{in:ObjectUpdate}{i:4}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:1}{i:123}",
+                txtUniqueId.getText(), ballX + 4, ballY + 4, zTile))); // Diago Derecha Abajo
+
+        sendToClient(new HPacket(String.format(
+                "{in:ObjectUpdate}{i:5}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:1}{i:123}",
+                txtUniqueId.getText(), ballX - 4, ballY - 4, zTile))); // Diago Izquierda Arriba
+
+        sendToClient(new HPacket(String.format(
+                "{in:ObjectUpdate}{i:6}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:1}{i:123}",
+                txtUniqueId.getText(), ballX + 4, ballY - 4, zTile))); // Diago Derecha Arriba
+
+        sendToClient(new HPacket(String.format(
+                "{in:ObjectUpdate}{i:7}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:1}{i:123}",
+                txtUniqueId.getText(), ballX - 4, ballY, zTile))); // Izquierda
+
+        sendToClient(new HPacket(String.format(
+                "{in:ObjectUpdate}{i:8}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:1}{i:123}",
+                txtUniqueId.getText(), ballX + 4, ballY, zTile))); // Derecha
+
+        sendToClient(new HPacket(String.format(
+                "{in:ObjectUpdate}{i:9}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:1}{i:123}",
+                txtUniqueId.getText(), ballX, ballY - 4, zTile))); // Arriba
+
+        sendToClient(new HPacket(String.format(
+                "{in:ObjectUpdate}{i:10}{i:%s}{i:%d}{i:%d}{i:0}{s:\"%s\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:1}{i:123}",
+                txtUniqueId.getText(), ballX, ballY + 4, zTile))); // Abajo
     }
 
     public void kickBall(int PlusX, int PlusY){
@@ -389,7 +401,8 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
         if(radioButtonTrap.isSelected() || radioButtonDribble.isSelected()){ flagBallTrap = false;   flagBallDribble = false; }
 
         String keyText = NativeKeyEvent.getKeyText(nativeKeyEvent.getKeyCode());
-        TextInputControl[] txtFieldsHotKeys = new TextInputControl[]{txtShoot, txtTrap, txtDribble, txtDoubleClick, txtMix};
+        TextInputControl[] txtFieldsHotKeys = new TextInputControl[]{txtShoot, txtTrap, txtDribble,
+                txtDoubleClick, txtMix, txtUpperLeft, txtUpperRight, txtLowerLeft, txtLowerRight};
         /* When the key is released, somehow the loop stops, however it reduces performance and fails sometimes, sorry :/
         new Thread(() -> { }).start();*/
         for(TextInputControl element: txtFieldsHotKeys){
@@ -420,10 +433,31 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                     else if(keyText.equals(txtDribble.getText())) keyDribble();
                     else if(keyText.equals(txtDoubleClick.getText())) keyDoubleClick();
                     else if(keyText.equals(txtMix.getText())) keyMix();
+                    else if(keyText.equals(txtUpperLeft.getText())) keyUpperLeft();
+                    else if(keyText.equals(txtUpperRight.getText())) keyUpperRight();
+                    else if(keyText.equals(txtLowerLeft.getText())) keyLowerLeft();
+                    else if(keyText.equals(txtLowerRight.getText())) keyLowerRight();
                 }
             }
         }
     }
+
+    private void keyUpperLeft(){ // Superior izquierda
+        sendToServer(new HPacket(String.format("{out:MoveAvatar}{i:%d}{i:%d}", ballX - 3, ballY - 3)));
+    }
+
+    private void keyUpperRight(){ // Superior derecha
+        sendToServer(new HPacket(String.format("{out:MoveAvatar}{i:%d}{i:%d}", ballX + 3, ballY - 3)));
+    }
+
+    private void keyLowerLeft(){ // Inferior izquierda
+        sendToServer(new HPacket(String.format("{out:MoveAvatar}{i:%d}{i:%d}", ballX - 3, ballY + 3)));
+    }
+
+    private void keyLowerRight(){ // Inferior derecha
+        sendToServer(new HPacket(String.format("{out:MoveAvatar}{i:%d}{i:%d}", ballX + 3, ballY + 3)));
+    }
+
 
     private void keyDoubleClick() {
         Platform.runLater(()-> radioButtonDoubleClick.setSelected(true));
@@ -553,7 +587,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     }
 
     private boolean occupiedTile(int x, int y) {
-        for (Map.Entry<Integer, HPoint> entry : coords.entrySet()) {
+        for (Map.Entry<Integer, HPoint> entry : userCoords.entrySet()) {
             HPoint value = entry.getValue();
             if (x == value.getX() && y == value.getY()) return true;
         }
@@ -657,47 +691,39 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
     }
 
     public void handleDiagoKiller(ActionEvent actionEvent) {
-        CheckBox checkBox = (CheckBox) actionEvent.getSource();
-        if(checkBox.isSelected()){
-            // Diago Izquierda abajo
+        CheckBox chkBoxDiago = (CheckBox) actionEvent.getSource();
+        if(chkBoxDiago.isSelected()){
             sendToClient(new HPacket(String.format(
-                    "{in:ObjectAdd}{i:3}{i:%s}{i:-4}{i:4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
-                    txtUniqueId.getText())));
+                    "{in:ObjectAdd}{i:3}{i:%s}{i:-4}{i:4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText()))); // Diago Izquierda abajo
 
-            // Diago Derecha abajo
             sendToClient(new HPacket(String.format(
-                    "{in:ObjectAdd}{i:4}{i:%s}{i:4}{i:4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
-                    txtUniqueId.getText())));
+                    "{in:ObjectAdd}{i:4}{i:%s}{i:4}{i:4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText()))); // Diago Derecha abajo
 
-            // Diago Izquierda Arriba
             sendToClient(new HPacket(String.format(
-                    "{in:ObjectAdd}{i:5}{i:%s}{i:-4}{i:-4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
-                    txtUniqueId.getText())));
+                    "{in:ObjectAdd}{i:5}{i:%s}{i:-4}{i:-4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText()))); // Diago Izquierda Arriba
 
-            // Diago Derecha Arriba
             sendToClient(new HPacket(String.format(
-                    "{in:ObjectAdd}{i:6}{i:%s}{i:4}{i:-4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
-                    txtUniqueId.getText())));
+                    "{in:ObjectAdd}{i:6}{i:%s}{i:4}{i:-4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText()))); // Diago Derecha Arriba
 
-            // Izquierda
             sendToClient(new HPacket(String.format(
-                    "{in:ObjectAdd}{i:7}{i:%s}{i:-4}{i:0}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
-                    txtUniqueId.getText())));
+                    "{in:ObjectAdd}{i:7}{i:%s}{i:-4}{i:0}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText()))); // Izquierda
 
-            // Derecha
             sendToClient(new HPacket(String.format(
-                    "{in:ObjectAdd}{i:8}{i:%s}{i:4}{i:0}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
-                    txtUniqueId.getText())));
+                    "{in:ObjectAdd}{i:8}{i:%s}{i:4}{i:0}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText()))); // Derecha
 
-            // Arriba
             sendToClient(new HPacket(String.format(
-                    "{in:ObjectAdd}{i:9}{i:%s}{i:0}{i:-4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
-                    txtUniqueId.getText())));
+                    "{in:ObjectAdd}{i:9}{i:%s}{i:0}{i:-4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText()))); // Arriba
 
-            // Abajo
             sendToClient(new HPacket(String.format(
-                    "{in:ObjectAdd}{i:10}{i:%s}{i:0}{i:4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
-                    txtUniqueId.getText())));
+                    "{in:ObjectAdd}{i:10}{i:%s}{i:0}{i:4}{i:0}{s:\"0.5\"}{s:\"0.0\"}{i:0}{i:0}{s:\"0\"}{i:-1}{i:0}{i:123}{s:\"OwnerName\"}",
+                    txtUniqueId.getText()))); // Abajo
         }
         else {
             sendToClient(new HPacket("{in:ObjectRemove}{s:\"3\"}{b:false}{i:123}{i:0}"));
