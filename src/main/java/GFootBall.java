@@ -46,7 +46,7 @@ public class GFootBall extends ExtensionForm implements NativeKeyListener {
     Map<Integer, HPoint> userCoords = new HashMap<>();
 
     public boolean flagBallTrap = false, flagBallDribble = false, guideTrap = false;
-    public TextField txtShoot, txtTrap, txtDribble, txtDoubleClick, txtMix, txtUniqueId;
+    public TextField txtShoot, txtTrap, txtDribble, txtMix, txtUniqueId;
 
     public TextField txtUpperLeft, txtUpperRight, txtLowerLeft, txtLowerRight;
 
@@ -402,7 +402,7 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
 
         String keyText = NativeKeyEvent.getKeyText(nativeKeyEvent.getKeyCode());
         TextInputControl[] txtFieldsHotKeys = new TextInputControl[]{txtShoot, txtTrap, txtDribble,
-                txtDoubleClick, txtMix, txtUpperLeft, txtUpperRight, txtLowerLeft, txtLowerRight};
+                txtMix, txtUpperLeft, txtUpperRight, txtLowerLeft, txtLowerRight};
         /* When the key is released, somehow the loop stops, however it reduces performance and fails sometimes, sorry :/
         new Thread(() -> { }).start();*/
         for(TextInputControl element: txtFieldsHotKeys){
@@ -417,9 +417,6 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                 else if(element.equals(txtDribble)){
                     Platform.runLater(()-> radioButtonDribble.setText(String.format("Dribble [Key %s]", keyText)));
                 }
-                else if(element.equals(txtDoubleClick)){
-                    Platform.runLater(()-> radioButtonDoubleClick.setText(String.format("DoubleClick [Key %s]", keyText)));
-                }
                 else if(element.equals(txtMix)){
                     Platform.runLater(()-> radioButtonMix.setText(String.format("Mix (Trap & Dribble) [Key %s]", keyText)));
                 }
@@ -431,7 +428,6 @@ Incoming[2969] -> [0][0][0][10][11][153][0][0][0][0][0][0][0][0]
                     if(keyText.equals(txtShoot.getText())) keyShoot();
                     else if(keyText.equals(txtTrap.getText())) keyTrap();
                     else if(keyText.equals(txtDribble.getText())) keyDribble();
-                    else if(keyText.equals(txtDoubleClick.getText())) keyDoubleClick();
                     else if(keyText.equals(txtMix.getText())) keyMix();
                     else if(keyText.equals(txtUpperLeft.getText())) keyUpperLeft();
                     else if(keyText.equals(txtUpperRight.getText())) keyUpperRight();

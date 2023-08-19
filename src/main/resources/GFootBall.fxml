@@ -33,7 +33,6 @@
                   </RadioButton>
                   <RadioButton fx:id="radioButtonTrap" layoutX="149.0" layoutY="155.0" mnemonicParsing="false" text="Trap [Key F2]" toggleGroup="$a" />
                   <RadioButton fx:id="radioButtonDribble" layoutX="15.0" layoutY="186.0" mnemonicParsing="false" text="Dribble [Key F3]" toggleGroup="$a" />
-                  <RadioButton fx:id="radioButtonDoubleClick" layoutX="149.0" layoutY="186.0" mnemonicParsing="false" text="DoubleClick [Key F4]" toggleGroup="$a" />
                   <RadioButton fx:id="radioButtonWalk" layoutX="399.0" layoutY="186.0" mnemonicParsing="false" text="&quot;Walk&quot;">
                      <toggleGroup>
                         <ToggleGroup fx:id="b" />
@@ -51,11 +50,9 @@
                  <Label fx:id="labelShoot" layoutX="26.0" layoutY="25.0" text="Shoot:" />
                <Label layoutX="181.0" layoutY="19.0" text="Dribble:" />
                <Label layoutX="30.0" layoutY="54.0" text="Trap:" />
-               <Label layoutX="177.0" layoutY="50.0" text="DoubleClick:" />
                <TextField fx:id="txtShoot" alignment="CENTER" layoutX="82.0" layoutY="20.0" prefHeight="26.0" prefWidth="45.0" text="F1" />
                <TextField fx:id="txtTrap" alignment="CENTER" layoutX="82.0" layoutY="49.0" prefHeight="26.0" prefWidth="45.0" text="F2" />
                <TextField fx:id="txtDribble" alignment="CENTER" layoutX="241.0" layoutY="14.0" prefHeight="26.0" prefWidth="45.0" text="F3" />
-               <TextField fx:id="txtDoubleClick" alignment="CENTER" layoutX="264.0" layoutY="45.0" prefHeight="26.0" prefWidth="45.0" text="F4" />
                <Label layoutX="331.0" layoutY="19.0" text="Mix:" />
                <TextField fx:id="txtMix" alignment="CENTER" layoutX="368.0" layoutY="14.0" prefHeight="26.0" prefWidth="45.0" text="F5" />
                <Label layoutX="30.0" layoutY="117.0" text="Upper left follower" />
